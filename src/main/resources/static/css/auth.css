@@ -1,0 +1,146 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 30px;
+}
+
+.auth-card {
+    width: 420px;
+    background: white;
+    padding: 40px;
+
+    border-radius: 18px;
+
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+.logo {
+    text-align: center;
+    font-size: 40px;
+    margin-bottom: 8px;
+}
+
+.auth-card h2 {
+    text-align: center;
+    margin: 0 0 8px;
+    color: #222;
+}
+
+.subtitle {
+    text-align: center;
+    color: #777;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
+    margin-bottom: 7px;
+
+    font-weight: bold;
+    color: #333;
+}
+
+input {
+    width: 100%;
+    padding: 13px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    font-size: 15px;
+}
+
+input:focus {
+    outline: none;
+    border-color: #667eea;
+
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+}
+
+.auth-button {
+    width: 100%;
+    padding: 13px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #667eea;
+    color: white;
+
+    font-size: 16px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.auth-button:hover {
+    background: #5568d8;
+    transform: translateY(-1px);
+}
+
+.error {
+    background: #ffe5e5;
+    color: #c0392b;
+
+    padding: 10px;
+    border-radius: 7px;
+
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+
+    padding: 10px;
+    border-radius: 7px;
+
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 25px;
+    color: #666;
+}
+
+.auth-link a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 520px) {
+
+    body {
+        padding: 15px;
+    }
+
+    .auth-card {
+        width: 100%;
+        padding: 30px 25px;
+    }
+}

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Catalog CRUD App</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; background-color: #fcfcfc; }
+        h1, h2 { color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-size: 14px; margin-right: 5px; }
+        .btn-submit { background: #007bff; color: white; }
+        .btn-submit:hover { background: #0056b3; }
+        .btn-load { background: #28a745; color: white; margin-top: 20px; }
+        .btn-load:hover { background: #218838; }
+        .btn-edit { background: #ffc107; color: #212529; margin-top: 10px; }
+        .btn-edit:hover { background: #e0a800; }
+        .btn-delete { background: #dc3545; color: white; margin-top: 10px; }
+        .btn-delete:hover { background: #c82333; }
+        .btn-cancel { background: #6c757d; color: white; }
+        .btn-cancel:hover { background: #5a6268; }
+        #product-list { margin-top: 20px; }
+        .product-card { background: #ffffff; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .price { color: #28a745; font-weight: bold; margin: 5px 0 0 0; }
+        .error { color: #dc3545; font-weight: bold; }
+        .success { color: #28a745; font-weight: bold; }
+        .edit-container { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin-bottom: 20px; border-radius: 4px; display: none; }
+    </style>
+</head>
+<body>
+
+<!-- SECTION 1: EDIT PRODUCT PANEL (HIDDEN BY DEFAULT) -->
+<div id="editPanel" class="edit-container">
+    <h2 style="color: #856404; margin-top: 0;">Edit Product (ID: <span id="editIdText"></span>)</h2>
+    <form id="editForm" onsubmit="saveProductUpdate(event)">
+        <input type="hidden" id="editId">
+        <div class="form-group">
+            <label for="editName">New Name:</label>
+            <input type="text" id="editName" required>
+        </div>
+        <div class="form-group">
+            <label for="editPrice">New Price (₹):</label>
+            <input type="number" id="editPrice" step="0.01" required>
+        </div>
+        <button type="submit" class="btn-submit" style="background: #e0a800; color: #212529; font-weight: bold;">Update Changes</button>
+        <button type="button" class="btn-cancel" onclick="closeEditPanel()">Cancel</button>
+    </form>
+</div>
+
+<!-- SECTION 2: CREATE NEW PRODUCT FORM -->
+<h2>Create New Product</h2>
+<form id="productForm" onsubmit="createProduct(event)">
+    <div class="form-group">
+        <label for="name">Product Name:</label>
+        <input type="text" id="name" required placeholder="e.g., Wireless Mouse">
+    </div>
+    <div class="form-group">
+        <label for="price">Price (₹):</label>
+        <input type="number" id="price" step="0.01" required placeholder="e.g., 499.00">
+    </div>
+    <button type="submit" class="btn-submit">Save Product</button>
+</form>
+<p id="message-banner"></p>
+
+<hr style="margin: 30px 0; border: 0; border-top: 1px solid #ccc;">
+
+<!-- SECTION 3: VIEW PRODUCTS -->
+<h2>Product Catalog</h2>
+<button class="btn-load" onclick="fetchProducts()">Load Products</button>
+
+<div id="product-list">
+    <!-- Products will appear here dynamically -->
+</div>
+
+<script>
+    const API_URL = 'http://localhost:8080/api/gladwin';
+
+    // 🟢 FUNCTION 1: GET REQUEST (Fetch data)
+    async function fetchProducts() {
+        const listDiv = document.getElementById('product-list');
+        listDiv.innerHTML = 'Loading...';
+
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error('Failed to fetch products');
+
+            const products = await response.json();
+            listDiv.innerHTML = '';
+
+            if (products.length === 0) {
+                listDiv.innerHTML = '<p>No products found in the database.</p>';
+                return;
+            }
+
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                        <h3>${product.name} (ID: ${product.id})</h3>
+                        <p class="price">₹${product.price.toFixed(2)}</p>
+                        <button class="btn-edit" onclick="openEditPanel(${product.id}, '${product.name}', ${product.price})">Edit</button>
+                        <button class="btn-delete" onclick="deleteProduct(${product.id}, '${product.name}')">Delete</button>
+                    `;
+                listDiv.appendChild(card);
+            });
+
+        } catch (error) {
+            listDiv.innerHTML = `<p class="error">Error: Cannot connect to API. Is your Spring Boot app running?</p>`;
+        }
+    }
+
+    // 🔵 FUNCTION 2: POST REQUEST (Create data)
+    async function createProduct(event) {
+        event.preventDefault();
+        const nameInput = document.getElementById('name');
+        const priceInput = document.getElementById('price');
+        const banner = document.getElementById('message-banner');
+
+        const productData = { name: nameInput.value, price: parseFloat(priceInput.value) };
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(productData)
+            });
+
+            if (response.ok) {
+                banner.className = 'success';
+                banner.innerText = 'Product saved successfully!';
+                nameInput.value = '';
+                priceInput.value = '';
+                fetchProducts();
+            } else {
+                throw new Error('Server error');
+            }
+        } catch (error) {
+            banner.className = 'error';
+            banner.innerText = 'Error: Failed to save product.';
+        }
+    }
+
+    // 🟡 FUNCTION 3: INTERFACE CONTROL (Populate edit inputs)
+    function openEditPanel(id, name, price) {
+        document.getElementById('editPanel').style.display = 'block';
+        document.getElementById('editIdText').innerText = id;
+        document.getElementById('editId').value = id;
+        document.getElementById('editName').value = name;
+        document.getElementById('editPrice').value = price;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeEditPanel() {
+        document.getElementById('editPanel').style.display = 'none';
+    }
+
+    // 🟠 FUNCTION 4: PUT REQUEST (Update data)
+    async function saveProductUpdate(event) {
+        event.preventDefault();
+        const id = document.getElementById('editId').value;
+        const name = document.getElementById('editName').value;
+        const price = document.getElementById('editPrice').value;
+        const banner = document.getElementById('message-banner');
+
+        const updatedData = { name: name, price: parseFloat(price) };
+
+        try {
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+
+            if (response.ok) {
+                banner.className = 'success';
+                banner.innerText = `Product ID ${id} updated successfully!`;
+                closeEditPanel();
+                fetchProducts();
+            } else {
+                throw new Error('Update failed');
+            }
+        } catch (error) {
+            banner.className = 'error';
+            banner.innerText = 'Error: Could not process update.';
+        }
+    }
+
+    // 🔴 FUNCTION 5: DELETE REQUEST (Remove data from backend)
+    async function deleteProduct(id, name) {
+        // Native browser dialog box to ensure safety
+        if (!confirm(`Are you sure you want to permanently delete "${name}" (ID: ${id})?`)) {
+            return;
+        }
+
+        const banner = document.getElementById('message-banner');
+
+        try {
+            // Notice the ID appended to the URL matching backend @DeleteMapping("/{id}")
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                banner.className = 'success';
+                banner.innerText = `Product "${name}" deleted from database.`;
+
+                // If the deleted item was currently open in the edit panel, close it
+                if (document.getElementById('editId').value == id) {
+                    closeEditPanel();
+                }
+
+                fetchProducts(); // Refresh layout grid rows
+            } else {
+                throw new Error('Delete operation failed');
+            }
+        } catch (error) {
+            banner.className = 'error';
+            banner.innerText = 'Error: Failed to delete product from database.';
+        }
+    }
+</script>
+</body>
+</html>

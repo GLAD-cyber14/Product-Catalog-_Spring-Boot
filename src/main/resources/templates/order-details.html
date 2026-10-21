@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Order Details | Gladwin Product Suite</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 20px auto;
+        }
+
+        h1 {
+            color: #222;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .label {
+            color: #777;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .value {
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        /* Order Tracking */
+        .tracking {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 35px 0 15px;
+        }
+
+        .tracking::before {
+            content: "";
+            position: absolute;
+            top: 18px;
+            left: 12%;
+            right: 12%;
+            height: 4px;
+            background: #e5e7eb;
+            z-index: 0;
+        }
+
+        .tracking-progress {
+            position: absolute;
+            top: 18px;
+            left: 12%;
+            height: 4px;
+            width: 0;
+            background: #16a34a;
+            z-index: 1;
+            transition: width 0.3s ease;
+        }
+
+        .tracking-step {
+            position: relative;
+            z-index: 2;
+            width: 25%;
+            text-align: center;
+        }
+
+        .tracking-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e5e7eb;
+            color: #6b7280;
+            font-size: 18px;
+            border: 3px solid white;
+        }
+
+        .tracking-step.completed .tracking-icon {
+            background: #16a34a;
+            color: white;
+        }
+
+        .tracking-step.current .tracking-icon {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 0 0 4px #dbeafe;
+        }
+
+        .tracking-label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #6b7280;
+        }
+
+        .tracking-step.completed .tracking-label,
+        .tracking-step.current .tracking-label {
+            color: #15803d;
+        }
+
+        .tracking-step.current .tracking-label {
+            color: #2563eb;
+        }
+
+        .tracking-message {
+            margin-top: 25px;
+            padding: 14px;
+            background: #f0fdf4;
+            border-radius: 8px;
+            color: #166534;
+            text-align: center;
+        }
+
+        .tracking-message.cancelled {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .tracking-message.unknown {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 450px;
+        }
+
+        th, td {
+            padding: 14px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+        }
+
+        .total {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 21px;
+            font-weight: bold;
+            color: #087443;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 7px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 17px;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tracking {
+                margin-top: 25px;
+            }
+
+            .tracking::before {
+                left: 12%;
+                right: 12%;
+            }
+
+            .tracking-progress {
+                left: 12%;
+            }
+
+            .tracking-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+
+            .tracking::before,
+            .tracking-progress {
+                top: 14px;
+            }
+
+            .tracking-label {
+                font-size: 10px;
+                overflow-wrap: anywhere;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>📦 Order Details</h1>
+
+    <!-- Order Tracking -->
+    <div class="card">
+
+        <h2>🚚 Track Your Order</h2>
+
+        <!-- Show tracking timeline for active orders -->
+        <div th:if="${order.orderStatus != null
+                    and order.orderStatus.toUpperCase() != 'CANCELLED'
+                    and order.orderStatus.toUpperCase() != 'DELIVERED'}">
+
+            <div class="tracking">
+
+                <div class="tracking-progress"
+                     th:style="${order.orderStatus.toUpperCase() == 'PLACED'
+                         ? 'width: 0%'
+                         : order.orderStatus.toUpperCase() == 'PROCESSING'
+                         ? 'width: 25%'
+                         : order.orderStatus.toUpperCase() == 'SHIPPED'
+                         ? 'width: 50%'
+                         : 'width: 0%'}">
+                </div>
+
+                <div class="tracking-step completed">
+                    <div class="tracking-icon">✓</div>
+                    <div class="tracking-label">Order Placed</div>
+                </div>
+
+                <div class="tracking-step"
+                     th:classappend="${order.orderStatus.toUpperCase() == 'PROCESSING'
+                         ? ' current'
+                         : (order.orderStatus.toUpperCase() == 'SHIPPED'
+                         or order.orderStatus.toUpperCase() == 'DELIVERED')
+                         ? ' completed' : ''}">
+
+                    <div class="tracking-icon"
+                         th:text="${order.orderStatus.toUpperCase() == 'PROCESSING'
+                             or order.orderStatus.toUpperCase() == 'SHIPPED'
+                             or order.orderStatus.toUpperCase() == 'DELIVERED'
+                             ? '✓' : '2'}">2</div>
+
+                    <div class="tracking-label">Processing</div>
+                </div>
+
+                <div class="tracking-step"
+                     th:classappend="${order.orderStatus.toUpperCase() == 'SHIPPED'
+                         ? ' current'
+                         : order.orderStatus.toUpperCase() == 'DELIVERED'
+                         ? ' completed' : ''}">
+
+                    <div class="tracking-icon"
+                         th:text="${order.orderStatus.toUpperCase() == 'SHIPPED'
+                             or order.orderStatus.toUpperCase() == 'DELIVERED'
+                             ? '✓' : '3'}">3</div>
+
+                    <div class="tracking-label">Shipped</div>
+                </div>
+
+                <div class="tracking-step"
+                     th:classappend="${order.orderStatus.toUpperCase() == 'DELIVERED'
+                         ? ' completed current' : ''}">
+
+                    <div class="tracking-icon"
+                         th:text="${order.orderStatus.toUpperCase() == 'DELIVERED'
+                             ? '✓' : '4'}">4</div>
+
+                    <div class="tracking-label">Delivered</div>
+                </div>
+
+            </div>
+
+            <div class="tracking-message">
+                Current status:
+                <strong th:text="${order.orderStatus}">PLACED</strong>
+            </div>
+
+        </div>
+
+        <!-- Special message for delivered orders -->
+        <div class="tracking-message"
+             th:if="${order.orderStatus != null
+                     and order.orderStatus.toUpperCase() == 'DELIVERED'}">
+            ✅ Your order has been delivered!
+        </div>
+
+        <!-- Special message for cancelled orders -->
+        <div class="tracking-message cancelled"
+             th:if="${order.orderStatus != null
+                     and order.orderStatus.toUpperCase() == 'CANCELLED'}">
+            ❌ This order has been cancelled.
+        </div>
+
+        <!-- Handle missing or unexpected status -->
+        <div class="tracking-message unknown"
+             th:if="${order.orderStatus == null
+                     or (order.orderStatus.toUpperCase() != 'PLACED'
+                     and order.orderStatus.toUpperCase() != 'PROCESSING'
+                     and order.orderStatus.toUpperCase() != 'SHIPPED'
+                     and order.orderStatus.toUpperCase() != 'DELIVERED'
+                     and order.orderStatus.toUpperCase() != 'CANCELLED')}">
+            Your order status:
+            <strong th:text="${order.orderStatus != null
+                ? order.orderStatus : 'Awaiting status update'}"></strong>
+        </div>
+
+    </div>
+
+    <!-- Order Information -->
+    <div class="card">
+
+        <h2>Order Information</h2>
+
+        <div class="details-grid">
+
+            <div>
+                <div class="label">Order ID</div>
+                <div class="value" th:text="${order.id}"></div>
+            </div>
+
+            <div>
+                <div class="label">Order Date</div>
+                <div class="value"
+                     th:text="${order.orderDate != null ? #temporals.format(order.orderDate, 'dd MMM yyyy, hh:mm a') : 'N/A'}">
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Order Status</div>
+                <div class="value" th:text="${order.orderStatus}"></div>
+            </div>
+
+            <div>
+                <div class="label">Payment Method</div>
+                <div class="value" th:text="${order.paymentMethod}"></div>
+            </div>
+
+            <div>
+                <div class="label">Payment Status</div>
+                <div class="value" th:text="${order.paymentStatus}"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Purchased Products -->
+    <div class="card">
+
+        <h2>🛍️ Products Purchased</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Subtotal</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="item : ${orderItems}">
+
+                    <td th:text="${item.product != null ? item.product.name : 'Product unavailable'}">
+                    </td>
+
+                    <td th:text="${item.quantity}"></td>
+
+                    <td>
+                        ₹<span th:text="${#numbers.formatDecimal(item.price, 1, 2)}"></span>
+                    </td>
+
+                    <td>
+                        ₹<span th:text="${#numbers.formatDecimal(item.price * item.quantity, 1, 2)}"></span>
+                    </td>
+
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(orderItems)}">
+                    <td colspan="4">No product details found for this order.</td>
+                </tr>
+                </tbody>
+
+            </table>
+        </div>
+
+        <div class="total">
+            Total: ₹<span th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)}"></span>
+        </div>
+
+    </div>
+
+    <!-- Shipping Address -->
+    <div class="card">
+
+        <h2>🚚 Shipping Address</h2>
+
+        <p th:text="${order.addressLine}"></p>
+
+        <p>
+            <span th:text="${order.city}"></span>,
+            <span th:text="${order.state}"></span>
+            <span th:text="${order.postalCode}"></span>
+        </p>
+
+        <p>
+            <strong>Phone:</strong>
+            <span th:text="${order.phoneNumber}"></span>
+        </p>
+
+    </div>
+    <!-- Navigation -->
+    <div class="buttons">
+
+        <!-- Cancel Order button: only for eligible orders -->
+        <form th:if="${order.orderStatus != null
+                  and (order.orderStatus.toUpperCase() == 'PLACED'
+                  or order.orderStatus.toUpperCase() == 'PROCESSING')}"
+              th:action="@{/orders/{orderId}/cancel(orderId=${order.id})}"
+              method="post"
+              onsubmit="return confirm('Are you sure you want to cancel this order?');">
+
+            <button type="submit" class="btn btn-danger">
+                ✖ Cancel Order
+            </button>
+
+        </form>
+
+        <a th:href="@{/orders}" class="btn btn-secondary">
+            ← Back to Order History
+        </a>
+
+        <a th:href="@{/products}" class="btn btn-primary">
+            Continue Shopping
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

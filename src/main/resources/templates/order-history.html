@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Orders | Gladwin Product Suite</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 16px;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #263238;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #17365d;
+        }
+
+        .back-link {
+            text-decoration: none;
+            background: #17365d;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+        }
+
+        .order-card {
+            background: white;
+            padding: 22px;
+            margin-bottom: 18px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
+        }
+
+        .order-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+        }
+
+        .order-heading h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .order-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+
+        .label {
+            display: block;
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .value {
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            background: #e8f5e9;
+            color: #237a35;
+            font-size: 13px;
+        }
+
+        .empty {
+            text-align: center;
+            background: white;
+            padding: 50px 20px;
+            border-radius: 12px;
+        }
+
+        .empty p {
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .shop-link {
+            background: #087f8c;
+            color: white;
+            padding: 11px 18px;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+
+        /* View Details button */
+        .view-details {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 11px 18px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 7px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .view-details:hover {
+            background: #1746a2;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 18px 10px;
+            }
+
+            .order-card {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>My Orders</h1>
+        <a class="back-link" th:href="@{/}">Back to Home</a>
+    </div>
+
+    <!-- Display this when the customer has no orders -->
+    <div class="empty" th:if="${#lists.isEmpty(orders)}">
+        <h2>No orders yet</h2>
+        <p>Your orders will appear here after you complete checkout.</p>
+        <a class="shop-link" th:href="@{/products}">Start Shopping</a>
+    </div>
+
+    <!-- Display each order -->
+    <div th:each="order : ${orders}" class="order-card">
+
+        <div class="order-heading">
+            <h2>
+                Order #
+                <span th:text="${order.id}">1001</span>
+            </h2>
+
+            <span class="status"
+                  th:text="${order.orderStatus}">PLACED</span>
+        </div>
+
+        <div class="order-details">
+
+            <div>
+                <span class="label">Order Date</span>
+                <span class="value"
+                      th:text="${order.orderDate != null ? #temporals.format(order.orderDate, 'dd MMM yyyy, hh:mm a') : 'Not available'}">
+                    21 Oct 2026
+                </span>
+            </div>
+
+            <div>
+                <span class="label">Total Amount</span>
+                <span class="value">
+                    ₹<span th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)}">500.00</span>
+                </span>
+            </div>
+
+            <div>
+                <span class="label">Payment Method</span>
+                <span class="value"
+                      th:text="${order.paymentMethod}">COD</span>
+            </div>
+
+            <div>
+                <span class="label">Payment Status</span>
+                <span class="value"
+                      th:text="${order.paymentStatus}">PENDING</span>
+            </div>
+
+        </div>
+
+        <!-- NEW: View Details button -->
+        <a class="view-details"
+           th:href="@{/orders/{id}(id=${order.id})}">
+            View Details →
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

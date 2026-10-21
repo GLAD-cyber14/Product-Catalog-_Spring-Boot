@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout :: header-fragment('Gladwin Product Suite')}">
+</head>
+
+<body class="home-page">
+
+<!-- ================= NAVBAR ================= -->
+<div th:replace="~{layout :: navbar}"></div>
+
+
+<!-- ================= HERO SECTION ================= -->
+<section class="home-hero">
+
+    <div class="hero-left">
+        <div class="hero-badge">✨ Welcome to Gladwin Premium Product Suite</div>
+
+        <h1>
+            Everything You Need.
+            <span>All in One Place.</span>
+        </h1>
+
+        <p>
+            Discover amazing products, explore categories,
+            and enjoy a simple shopping experience.
+        </p>
+    </div>
+
+    <div class="hero-middle">
+        <div class="home-search">
+            <span class="search-icon">🔍</span>
+
+            <input type="text"
+                   id="homeSearch"
+                   placeholder="Search for products..."
+                   onkeydown="if (event.key === 'Enter') searchProducts();">
+
+            <button type="button" onclick="searchProducts()">
+                Search →
+            </button>
+        </div>
+
+        <div class="quick-categories">
+            <a th:each="category : ${mainCategories}"
+               th:href="@{/products(categoryId=${category.categoryid}, page=0)}">
+                <span th:if="${category.categoryname == 'ELECTRONICS'}">💻</span>
+                <span th:if="${category.categoryname == 'APPAREL'}">👕</span>
+                <span th:if="${category.categoryname == 'GROCERY'}">🛒</span>
+                <span th:if="${category.categoryname == 'HOME'}">🏠</span>
+                <span th:if="${category.categoryname != 'ELECTRONICS'
+                              and category.categoryname != 'APPAREL'
+                              and category.categoryname != 'GROCERY'
+                              and category.categoryname != 'HOME'}">🛍️</span>
+                <span th:text="${category.categoryname}">Category</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="hero-visual">
+        <div class="floating-item item-one">🛍️</div>
+        <div class="floating-item item-two">🎁</div>
+        <div class="floating-item item-three">📦</div>
+
+        <div class="hero-cart">🛒</div>
+
+        <div class="hero-visual-text">
+            <small>Better Products</small>
+            <strong>Brighter Choices</strong>
+        </div>
+    </div>
+
+</section>
+
+
+<!-- ================= FEATURED PRODUCTS ================= -->
+<section class="home-section featured-section">
+
+    <div class="section-heading">
+
+        <div>
+
+            <span class="section-label">
+                TRENDING NOW
+            </span>
+
+            <h2>
+                Featured Products
+            </h2>
+
+            <p>
+                Explore some of our latest products.
+            </p>
+
+        </div>
+
+
+        <a href="/products"
+           class="view-all-btn">
+
+            View All Products →
+
+        </a>
+
+    </div>
+
+
+    <div class="featured-products">
+
+        <!-- Product cards -->
+        <div class="featured-product-card"
+             th:each="prod : ${allProductsList}">
+
+            <!-- IMAGE -->
+            <div class="featured-image">
+
+                <img th:if="${prod.image != null and !#strings.isEmpty(prod.image)}"
+                     th:src="@{${prod.image}}"
+                     th:alt="${prod.name}">
+
+                <div th:unless="${prod.image != null and !#strings.isEmpty(prod.image)}"
+                     class="no-product-image">
+
+                    📦
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT DETAILS -->
+            <div class="featured-details">
+
+                <span class="product-tag">
+                    Featured
+                </span>
+
+                <h3 th:text="${prod.name}">
+                    Product Name
+                </h3>
+
+                <div class="featured-bottom">
+
+                    <strong th:text="'₹' + ${#numbers.formatDecimal(prod.price, 1, 2)}">
+                        ₹0.00
+                    </strong>
+
+                    <a th:href="@{/products}"
+                       class="product-view-btn">
+
+                        View
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+
+<!-- ================= SHOP BY CATEGORY ================= -->
+<section class="home-section">
+
+    <div class="section-heading">
+
+        <div>
+            <span class="section-label">EXPLORE</span>
+
+            <h2>
+                Shop by Category
+            </h2>
+
+            <p>
+                Find exactly what you're looking for.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="category-grid">
+
+        <!-- Electronics -->
+        <a th:href="@{/products(search='ELECTRONICS', page=0)}" class="category-card electronics">
+
+            <div class="category-icon">
+                💻
+            </div>
+
+            <div>
+                <h3>Electronics</h3>
+
+                <p>
+                    Devices, accessories & more
+                </p>
+            </div>
+
+            <span class="category-arrow">
+                →
+            </span>
+
+        </a>
+
+
+        <!-- Apparel -->
+        <a th:href="@{/products(search='APPAREL', page=0)}" class="category-card apparel">
+
+            <div class="category-icon">
+                👕
+            </div>
+
+            <div>
+                <h3>Apparel</h3>
+
+                <p>
+                    Clothing & everyday fashion
+                </p>
+            </div>
+
+            <span class="category-arrow">
+                →
+            </span>
+
+        </a>
+
+
+        <!-- Grocery -->
+        <a th:href="@{/products(search='GROCERY', page=0)}" class="category-card grocery">
+
+            <div class="category-icon">
+                🛒
+            </div>
+
+            <div>
+                <h3>Grocery</h3>
+
+                <p>
+                    Fresh & everyday essentials
+                </p>
+            </div>
+
+            <span class="category-arrow">
+                →
+            </span>
+
+        </a>
+
+
+        <!-- Home -->
+        <a th:href="@{/products(search='HOME', page=0)}" class="category-card home-category">
+
+            <div class="category-icon">
+                🏠
+            </div>
+
+            <div>
+                <h3>Home</h3>
+
+                <p>
+                    Products for your home
+                </p>
+            </div>
+
+            <span class="category-arrow">
+                →
+            </span>
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- ================= CALL TO ACTION ================= -->
+<section class="home-cta">
+
+    <div>
+
+        <span>
+            🛍️ READY TO EXPLORE?
+        </span>
+
+        <h2>
+            Find something you'll love.
+        </h2>
+
+        <p>
+            Browse our complete product collection
+            and discover your next favorite product.
+        </p>
+
+        <a href="/products"
+           class="cta-button">
+
+            Explore Products →
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FOOTER ================= -->
+<footer class="home-footer">
+
+    <div>
+
+        <strong>
+            🏙️ Gladwin Product Suite
+        </strong>
+
+        <span>
+            © 2026 All rights reserved.
+        </span>
+
+    </div>
+
+</footer>
+
+
+<!-- ================= PAGE CSS ================= -->
+<style>
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body.home-page {
+        margin: 0;
+        background:
+                radial-gradient(circle at 10% 10%,
+                rgba(91, 94, 255, 0.10),
+                transparent 30%),
+                radial-gradient(circle at 90% 20%,
+                rgba(255, 105, 180, 0.10),
+                transparent 30%),
+                #f7f9fc;
+        color: #182033;
+    }
+
+
+    /* ================= COMPACT HERO ================= */
+
+    .home-hero {
+        width: min(1500px, calc(100% - 40px));
+        min-height: 245px;
+        margin: 28px auto 0;
+        padding: 28px 38px;
+        border-radius: 28px;
+        display: grid;
+        grid-template-columns: 1.05fr 1fr 0.85fr;
+        align-items: center;
+        gap: 30px;
+        position: relative;
+        overflow: hidden;
+        background:
+                radial-gradient(circle at 85% 20%, rgba(255,255,255,.45), transparent 25%),
+                linear-gradient(110deg, #eaf7ff 0%, #dceeff 48%, #eef0ff 100%);
+        border: 1px solid rgba(255,255,255,.8);
+        box-shadow: 0 18px 45px rgba(53,76,120,.12);
+    }
+
+    .home-hero::before {
+        content: "";
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(91,94,255,.10);
+        right: 160px;
+        top: -180px;
+    }
+
+    .home-hero::after {
+        content: "";
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: rgba(56,189,248,.10);
+        left: 35%;
+        bottom: -180px;
+    }
+
+    .hero-left,
+    .hero-middle,
+    .hero-visual {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        padding: 7px 13px;
+        margin-bottom: 10px;
+        border-radius: 30px;
+        background: rgba(255,255,255,.75);
+        color: #17316f;
+        font-size: 12px;
+        font-weight: 700;
+        box-shadow: 0 5px 15px rgba(30,60,120,.08);
+    }
+
+    .hero-left h1 {
+        margin: 0;
+        color: #10245a;
+        font-size: clamp(27px, 2.8vw, 45px);
+        line-height: 1.05;
+        font-weight: 850;
+        letter-spacing: -1px;
+    }
+
+    .hero-left h1 span {
+        display: block;
+        background: linear-gradient(90deg, #1677ff, #6555ee);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-left p {
+        margin: 12px 0 0;
+        max-width: 440px;
+        color: #53698e;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .hero-middle .home-search {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(35,70,130,.12);
+    }
+
+    .hero-middle .search-icon {
+        margin-left: 13px;
+        font-size: 18px;
+    }
+
+    .hero-middle .home-search input {
+        flex: 1;
+        min-width: 0;
+        border: none;
+        outline: none;
+        background: transparent;
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .hero-middle .home-search button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        background: linear-gradient(135deg, #2463e8, #5b45ed);
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .hero-middle .quick-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 13px;
+    }
+
+    .hero-middle .quick-categories a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 12px;
+        border-radius: 30px;
+        background: rgba(255,255,255,.78);
+        border: 1px solid rgba(255,255,255,.9);
+        color: #18366f;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 650;
+        transition: .2s;
+    }
+
+    .hero-middle .quick-categories a:hover {
+        transform: translateY(-2px);
+        background: white;
+        box-shadow: 0 7px 18px rgba(30,60,120,.10);
+    }
+
+    .hero-visual {
+        height: 190px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hero-cart {
+        width: 105px;
+        height: 105px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 30px;
+        font-size: 70px;
+        background: linear-gradient(145deg, #fff, #e7f1ff);
+        box-shadow: 0 18px 35px rgba(35,80,150,.16);
+        transform: rotate(-4deg);
+    }
+
+    .hero-visual-text {
+        position: absolute;
+        right: 0;
+        bottom: 12px;
+        padding: 12px 16px;
+        border-radius: 15px;
+        background: rgba(255,255,255,.68);
+        backdrop-filter: blur(10px);
+        color: #17316f;
+        box-shadow: 0 8px 20px rgba(35,70,130,.08);
+    }
+
+    .hero-visual-text small {
+        display: block;
+        font-size: 10px;
+        color: #60759a;
+    }
+
+    .hero-visual-text strong {
+        display: block;
+        font-size: 14px;
+    }
+
+    .floating-item {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0 8px 20px rgba(35,70,130,.12);
+        font-size: 19px;
+    }
+
+    .item-one { left: 10px; top: 25px; }
+    .item-two { right: 65px; top: 15px; }
+    .item-three { left: 55px; bottom: 20px; }
+
+    /* ================= SEARCH ================= */
+
+    .home-search {
+        width: min(650px, 100%);
+
+        background: white;
+
+        padding: 5px;
+
+        border-radius: 18px;
+
+        display: flex;
+
+        align-items: center;
+
+        box-shadow:
+                0 12px 35px rgba(0,0,0,0.18);
+    }
+
+
+    .search-icon {
+        font-size: 20px;
+        margin-left: 14px;
+    }
+
+
+    .home-search input {
+        flex: 1;
+
+        border: none;
+        outline: none;
+
+        padding: 15px;
+
+        font-size: 16px;
+
+        background: transparent;
+    }
+
+
+    .home-search button {
+        border: none;
+
+        background: #4f46e5;
+
+        color: white;
+
+        font-weight: 700;
+
+        padding: 13px 23px;
+
+        border-radius: 13px;
+
+        cursor: pointer;
+
+        transition: 0.2s;
+    }
+
+
+    .home-search button:hover {
+        transform: translateY(-2px);
+    }
+
+
+    /* ================= QUICK CATEGORIES ================= */
+
+    .quick-categories {
+        display: flex;
+
+        flex-wrap: wrap;
+
+        gap: 10px;
+
+        margin-top: 22px;
+    }
+
+
+    .quick-categories a {
+        text-decoration: none;
+
+        color: white;
+
+        padding: 9px 15px;
+
+        border-radius: 30px;
+
+        background: rgba(255,255,255,0.10);
+
+        border: 1px solid rgba(255,255,255,0.12);
+
+        font-size: 14px;
+
+        transition: 0.2s;
+    }
+
+
+    .quick-categories a:hover {
+        background: rgba(255,255,255,0.20);
+
+        transform: translateY(-2px);
+    }
+
+
+    /* ================= SECTIONS ================= */
+
+    .home-section {
+        width: min(1400px, calc(100% - 40px));
+
+        margin: 75px auto;
+    }
+
+
+    .section-heading {
+        display: flex;
+
+        align-items: end;
+
+        /*justify-content: space-between;*/
+
+        gap: 10px;
+
+        margin-bottom: 18px;
+    }
+
+
+    .section-label {
+        font-size: 12px;
+
+        font-weight: 800;
+
+        letter-spacing: 2px;
+
+        color: #635bff;
+    }
+
+
+    .section-heading h2 {
+        margin: 7px 0;
+
+        font-size: 34px;
+
+        font-weight: 800;
+    }
+
+
+    .section-heading p {
+        margin: 0;
+
+        color: #7b8497;
+    }
+
+
+    /* ================= CATEGORY CARDS ================= */
+
+    .category-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, 1fr);
+
+        gap: 20px;
+    }
+
+
+    .category-card {
+        text-decoration: none;
+
+        color: inherit;
+
+        min-height: 190px;
+
+        border-radius: 24px;
+
+        padding: 28px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: space-between;
+
+        position: relative;
+
+        overflow: hidden;
+
+        border: 1px solid rgba(0,0,0,0.05);
+
+        transition:
+                transform 0.25s,
+                box-shadow 0.25s;
+    }
+
+
+    .category-card:hover {
+        transform: translateY(-7px);
+
+        box-shadow:
+                0 20px 40px rgba(0,0,0,0.10);
+    }
+
+
+    .category-card.electronics {
+        background: linear-gradient(
+                135deg,
+                #e9f4ff,
+                #dbeafe
+        );
+    }
+
+
+    .category-card.apparel {
+        background: linear-gradient(
+                135deg,
+                #fff0f6,
+                #ffe4ef
+        );
+    }
+
+
+    .category-card.grocery {
+        background: linear-gradient(
+                135deg,
+                #edfff3,
+                #dcfce7
+        );
+    }
+
+
+    .category-card.home-category {
+        background: linear-gradient(
+                135deg,
+                #fff8e8,
+                #ffedd5
+        );
+    }
+
+
+    .category-icon {
+        font-size: 42px;
+    }
+
+
+    .category-card h3 {
+        margin: 15px 0 5px;
+
+        font-size: 22px;
+
+        font-weight: 800;
+    }
+
+
+    .category-card p {
+        margin: 0;
+
+        color: #6b7280;
+
+        font-size: 14px;
+    }
+
+
+    .category-arrow {
+        position: absolute;
+
+        right: 25px;
+        bottom: 22px;
+
+        font-size: 25px;
+
+        font-weight: 700;
+    }
+
+
+    /* ================= FEATURED PRODUCTS ================= */
+
+    .featured-section {
+        margin-top: 40px;
+    }
+
+
+    .featured-products {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, 1fr);
+
+        gap: 20px;
+    }
+
+
+    .featured-product-card {
+        background: white;
+
+        border-radius: 22px;
+
+        overflow: hidden;
+
+        border: 1px solid #edf0f5;
+
+        transition:
+                transform 0.25s,
+                box-shadow 0.25s;
+    }
+
+
+    .featured-product-card:hover {
+        transform: translateY(-6px);
+
+        box-shadow:
+                0 18px 40px rgba(28, 35, 60, 0.10);
+    }
+
+    .featured-image {
+        height: 230px;
+
+        background: #f4f6fa;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: 20px;
+    }
+
+
+    .featured-image img {
+        width: 100%;
+        height: 100%;
+
+        object-fit: contain;
+    }
+
+
+    .no-product-image {
+        font-size: 55px;
+    }
+
+
+    .featured-details {
+        padding: 20px;
+    }
+
+
+    .product-tag {
+        display: inline-block;
+
+        padding: 5px 9px;
+
+        border-radius: 8px;
+
+        background: #eef2ff;
+
+        color: #4f46e5;
+
+        font-size: 11px;
+
+        font-weight: 800;
+
+        text-transform: uppercase;
+    }
+
+
+    .featured-details h3 {
+        margin: 13px 0 18px;
+
+        font-size: 18px;
+
+        font-weight: 750;
+
+        white-space: nowrap;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+    }
+
+
+    .featured-bottom {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+    }
+
+
+    .featured-bottom strong {
+        font-size: 20px;
+    }
+
+
+    .product-view-btn {
+        text-decoration: none;
+
+        padding: 8px 14px;
+
+        border-radius: 10px;
+
+        background: #111936;
+
+        color: white;
+
+        font-size: 13px;
+
+        font-weight: 700;
+    }
+
+
+    .view-all-btn {
+        text-decoration: none;
+
+        color: #4f46e5;
+
+        font-weight: 700;
+    }
+
+
+    /* ================= CTA ================= */
+
+    .home-cta {
+        width: min(1400px, calc(100% - 40px));
+
+        margin: 100px auto 60px;
+
+        padding: 65px;
+
+        border-radius: 30px;
+
+        background:
+                linear-gradient(
+                        135deg,
+                        #111936,
+                        #343d82
+                );
+
+        color: white;
+
+        text-align: center;
+    }
+
+
+    .home-cta span {
+        font-size: 12px;
+
+        letter-spacing: 2px;
+
+        font-weight: 800;
+
+        opacity: 0.7;
+    }
+
+
+    .home-cta h2 {
+        font-size: 40px;
+
+        margin: 12px 0;
+    }
+
+
+    .home-cta p {
+        color: rgba(255,255,255,0.70);
+
+        max-width: 600px;
+
+        margin: 0 auto 28px;
+    }
+
+
+    .cta-button {
+        display: inline-block;
+
+        padding: 13px 24px;
+
+        border-radius: 13px;
+
+        background: white;
+
+        color: #111936;
+
+        text-decoration: none;
+
+        font-weight: 800;
+    }
+
+
+    /* ================= FOOTER ================= */
+
+    .home-footer {
+        width: min(1400px, calc(100% - 40px));
+
+        margin: 0 auto;
+
+        padding: 20px 0 30px;
+
+        color: #7b8497;
+    }
+
+
+    .home-footer > div {
+        display: flex;
+
+        justify-content: space-between;
+
+        gap: 10px;
+
+        border-top: 1px solid #e5e7eb;
+
+        padding-top: 20px;
+    }
+
+
+    .home-footer strong {
+        color: #182033;
+    }
+
+
+    /* ================= RESPONSIVE ================= */
+
+    @media (max-width: 1000px) {
+
+        .category-grid,
+        .featured-products {
+            grid-template-columns:
+                repeat(2, 1fr);
+        }
+
+        .home-hero {
+            padding: 20px;
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .home-hero {
+            width: calc(100% - 20px);
+
+            padding: 35px 25px;
+
+            min-height: 500px;
+
+            border-radius: 24px;
+        }
+
+
+        .home-section,
+        .home-cta,
+        .home-footer {
+            width: calc(100% - 20px);
+        }
+
+
+        .category-grid,
+        .featured-products {
+            grid-template-columns: 1fr;
+        }
+
+
+        .section-heading {
+            align-items: start;
+
+            flex-direction: column;
+        }
+
+
+        .home-search {
+            flex-direction: row;
+        }
+
+
+        .home-search button {
+            padding: 12px 15px;
+        }
+
+
+        .home-cta {
+            padding: 45px 25px;
+        }
+
+
+        .home-cta h2 {
+            font-size: 30px;
+        }
+
+
+        .home-footer > div {
+            flex-direction: column;
+        }
+
+    }
+
+
+    /* ================= COMPACT HERO RESPONSIVE ================= */
+
+    @media (max-width: 1050px) {
+        .home-hero {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .hero-visual {
+            display: none;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .home-hero {
+            width: calc(100% - 24px);
+            min-height: auto;
+            padding: 25px;
+            grid-template-columns: 1fr;
+        }
+
+        .hero-left h1 {
+            font-size: 32px;
+        }
+
+        .hero-middle {
+            margin-top: 5px;
+        }
+    }
+
+</style>
+
+
+<!-- ================= SEARCH SCRIPT ================= -->
+<script>
+
+    function searchProducts() {
+
+        const search =
+            document.getElementById("homeSearch")
+                .value
+                .trim();
+
+        if (search.length > 0) {
+
+            window.location.href =
+                "/products?search=" +
+                encodeURIComponent(search);
+
+        } else {
+
+            window.location.href = "/products";
+
+        }
+
+    }
+
+</script>
+<div th:replace="~{layout :: scripts}"></div>
+
+
+</body>
+</html>

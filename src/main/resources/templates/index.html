@@ -1,0 +1,972 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout :: header-fragment('Product Portal')}">
+    <title>Product Portal</title>
+    <link rel="stylesheet" th:href="@{/css/products.css}">
+</head>
+
+<body class="bg-light">
+
+<!-- =========================================================
+     NAVBAR
+========================================================= -->
+
+<div th:replace="~{layout :: navbar}"></div>
+
+
+<div class="container-fluid px-4 py-4">
+
+
+    <!-- =====================================================
+         SUCCESS MESSAGE
+    ===================================================== -->
+
+    <div th:if="${successMessage}"
+         class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        <span th:text="${successMessage}"></span>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close">
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         ERROR MESSAGE
+    ===================================================== -->
+
+    <div th:if="${errorMessage}"
+         class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+
+        <span th:text="${errorMessage}"></span>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close">
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         MAIN LAYOUT
+    ===================================================== -->
+
+    <div class="row g-4">
+
+
+        <!-- =================================================
+             ADMIN PRODUCT FORM
+        ================================================= -->
+
+        <div class="col-xl-3 col-lg-4"
+             sec:authorize="hasRole('ADMIN')">
+
+            <div class="card shadow-sm border-0 admin-product-card">
+
+                <!-- FORM HEADER -->
+
+                <div th:classappend="${productForm.id != 0}
+                        ? 'bg-warning text-dark'
+                        : 'bg-primary text-white'"
+                     class="card-header py-3">
+
+                    <h5 class="card-title mb-0 fw-bold"
+                        th:text="${productForm.id != 0}
+                        ? '✏️ Edit Product'
+                        : '➕ Add New Product'">
+
+                        ➕ Add New Product
+
+                    </h5>
+
+                </div>
+
+
+                <!-- FORM BODY -->
+
+                <div class="card-body p-4">
+
+                    <form th:action="@{/products/save}"
+                          th:object="${productForm}"
+                          method="post"
+                          enctype="multipart/form-data">
+
+
+                        <!-- PRODUCT ID -->
+
+                        <input type="hidden"
+                               th:field="*{id}">
+
+
+                        <!-- =================================================
+                             PRODUCT NAME
+                        ================================================= -->
+
+                        <div class="mb-3">
+
+                            <label for="name"
+                                   class="form-label fw-bold">
+
+                                Product Title
+
+                            </label>
+
+                            <input type="text"
+                                   id="name"
+                                   th:field="*{name}"
+                                   class="form-control"
+                                   placeholder="e.g., Ultra Keyboard"
+                                   required>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             PRICE
+                        ================================================= -->
+
+                        <div class="mb-3">
+
+                            <label for="price"
+                                   class="form-label fw-bold">
+
+                                Price (₹)
+
+                            </label>
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+                                    ₹
+                                </span>
+
+                                <input type="number"
+                                       id="price"
+                                       th:field="*{price}"
+                                       step="0.01"
+                                       min="0"
+                                       class="form-control"
+                                       placeholder="0.00"
+                                       required>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             STOCK
+                        ================================================= -->
+
+                        <div class="mb-3">
+
+                            <label for="stock"
+                                   class="form-label fw-bold">
+
+                                Stock Quantity
+
+                            </label>
+
+                            <input type="number"
+                                   id="stock"
+                                   th:field="*{stock}"
+                                   class="form-control"
+                                   placeholder="Enter available stock"
+                                   min="0"
+                                   required>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             PRODUCT SUBCATEGORY
+                        ================================================= -->
+
+                        <div class="mb-3">
+
+                            <label for="categoryid"
+                                   class="form-label fw-bold">
+
+                                Subcategory
+
+                            </label>
+
+
+                            <select id="categoryid"
+                                    th:field="*{categoryid}"
+                                    class="form-select"
+                                    required>
+
+
+                                <option value="0">
+                                    Select a subcategory
+                                </option>
+
+
+                                <!-- =========================================
+                                     MAIN CATEGORIES
+                                ========================================== -->
+
+                                <th:block th:each="main : ${mainCategories}">
+
+                                    <optgroup
+                                            th:label="${main.categoryname}">
+
+
+                                        <!-- =================================
+                                             SUBCATEGORIES
+                                        ================================== -->
+
+                                        <option
+                                                th:each="sub : ${categories}"
+                                                th:if="${sub.parent != null
+                                                       and sub.parent.categoryid
+                                                       == main.categoryid}"
+                                                th:value="${sub.categoryid}"
+                                                th:text="${sub.categoryname}">
+
+                                        </option>
+
+                                    </optgroup>
+
+                                </th:block>
+
+                            </select>
+
+
+                            <small class="text-muted">
+
+                                Select the subcategory this product
+                                belongs to.
+
+                            </small>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             PRODUCT IMAGE
+                        ================================================= -->
+
+                        <div class="mb-3">
+
+                            <label for="imageFile"
+                                   class="form-label fw-bold">
+
+                                Product Image
+
+                            </label>
+
+                            <input type="file"
+                                   id="imageFile"
+                                   name="imageFile"
+                                   class="form-control"
+                                   accept="image/*">
+
+                            <small class="text-muted">
+
+                                Select a JPG, JPEG, PNG or other image.
+
+                            </small>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             CURRENT IMAGE
+                        ================================================= -->
+
+                        <div th:if="${productForm.image != null
+                                    and !productForm.image.isEmpty()}"
+                             class="mb-3 text-center">
+
+                            <p class="fw-bold mb-2">
+                                Current Image
+                            </p>
+
+                            <img th:src="@{${productForm.image}}"
+                                 th:alt="${productForm.name}"
+                                 class="img-fluid rounded"
+                                 style="max-height: 150px;
+                                        object-fit: contain;">
+
+                        </div>
+
+
+                        <!-- =================================================
+                             BUTTONS
+                        ================================================= -->
+
+                        <div class="d-grid gap-2">
+
+
+                            <!-- SAVE -->
+
+                            <button type="submit"
+                                    th:classappend="${productForm.id != 0}
+                                    ? 'btn-warning'
+                                    : 'btn-primary'"
+                                    class="btn fw-bold">
+
+                                💾 Save Product
+
+                            </button>
+
+
+                            <!-- CANCEL EDIT -->
+
+                            <a th:if="${productForm.id != 0}"
+                               th:href="@{/products}"
+                               class="btn btn-outline-secondary">
+
+                                Cancel Edit
+
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CUSTOMER PRODUCT AREA
+        ================================================= -->
+
+        <div th:class="${#authorization.expression('hasRole(''ADMIN'')')}
+                    ? 'col-xl-9 col-lg-8'
+                    : 'col-12'">
+
+
+            <!-- =================================================
+                 MAIN CATEGORY HEADING
+            ================================================= -->
+
+            <div class="mb-4">
+
+                <h2 class="fw-bold text-dark mb-1"
+                    th:if="${selectedMainCategory != null}"
+                    th:text="${selectedMainCategory.categoryname}">
+
+                    Electronics
+
+                </h2>
+
+
+                <p class="text-muted mb-0"
+                   th:if="${selectedMainCategory != null and (search == null or #strings.isEmpty(search))}">
+
+                    Explore products in
+                    <span th:text="${selectedMainCategory.categoryname}">
+                        this category
+                    </span>
+
+                </p>
+
+                <p class="text-muted mb-0"
+                   th:if="${search != null and !#strings.isEmpty(search)}">
+                    Search results for
+                    <strong th:text="${search}">laptop</strong>
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 HORIZONTAL CATEGORY NAVIGATION
+            ================================================= -->
+
+            <div class="category-horizontal-nav mb-4">
+
+                <div class="category-main-row">
+                    <span class="category-nav-label">Categories</span>
+
+                    <div class="category-main-links">
+                        <a th:each="main : ${mainCategories}"
+                           th:href="@{/products(
+                                    categoryId=${main.categoryid},
+                                    page=0,
+                                    sortField=${sortField},
+                                    sortDir=${sortDir})}"
+                           class="category-main-link"
+                           th:classappend="${selectedMainCategory != null
+                                    and selectedMainCategory.categoryid == main.categoryid}
+                                    ? ' active' : ''"
+                           th:text="${main.categoryname}">
+                            ELECTRONICS
+                        </a>
+                    </div>
+                </div>
+
+                <div class="category-sub-row"
+                     th:if="${selectedMainCategory != null}">
+                    <span class="category-sub-label"
+                          th:text="${selectedMainCategory.categoryname}">
+                        Electronics
+                    </span>
+
+                    <div class="category-sub-links">
+                        <a th:each="category : ${categories}"
+                           th:if="${category.parent != null
+                                and category.parent.categoryid == selectedMainCategory.categoryid}"
+                           th:href="@{/products(
+                                    categoryId=${category.categoryid},
+                                    page=0,
+                                    sortField=${sortField},
+                                    sortDir=${sortDir})}"
+                           class="category-sub-link"
+                           th:classappend="${selectedCategoryId != null
+                                    and selectedCategoryId == category.categoryid}
+                                    ? ' active' : ''"
+                           th:text="${category.categoryname}">
+                            Laptops
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PRODUCT AREA
+            ================================================= -->
+
+            <div class="row g-3">
+
+                <div class="col-12">
+
+                    <!-- =================================================
+                         SORT BUTTONS
+                    ================================================= -->
+
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+
+
+                        <!-- SORT ID -->
+
+                        <a th:href="@{/products(
+                                categoryId=${selectedCategoryId},
+                                sortField='id',
+                                sortDir=${sortField == 'id'
+                                    ? reverseSortDir : 'asc'},
+                                page=0,
+                                search=${search})}"
+                           class="btn btn-outline-primary">
+
+                            Sort by ID
+
+                            <span th:if="${sortField == 'id'}"
+                                  th:text="${sortDir == 'asc'
+                                      ? ' ↑'
+                                      : ' ↓'}">
+
+                            </span>
+
+                        </a>
+
+
+                        <!-- SORT NAME -->
+
+                        <a th:href="@{/products(
+                                categoryId=${selectedCategoryId},
+                                sortField='name',
+                                sortDir=${sortField == 'name'
+                                    ? reverseSortDir : 'asc'},
+                                page=0,
+                                search=${search})}"
+                           class="btn btn-outline-primary">
+
+                            Sort by Name
+
+                            <span th:if="${sortField == 'name'}"
+                                  th:text="${sortDir == 'asc'
+                                      ? ' ↑'
+                                      : ' ↓'}">
+
+                            </span>
+
+                        </a>
+
+
+                    </div>
+
+
+                    <!-- =================================================
+                         OUT OF STOCK PRODUCTS
+                    ================================================= -->
+
+
+
+
+                    <!-- =================================================
+      AVAILABLE PRODUCTS
+ ================================================= -->
+
+                    <div>
+
+                        <div class="d-flex justify-content-between
+                align-items-center mb-3">
+
+                            <div>
+
+                                <h4 class="fw-bold mb-1">
+                                    Products
+                                </h4>
+
+                                <small class="text-muted"
+                                       th:text="${totalItems + ' products available'}">
+                                    Products available
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             NO AVAILABLE PRODUCTS
+                        ================================================= -->
+
+                        <div th:if="${#lists.isEmpty(availableProducts)}"
+                             class="alert alert-secondary text-center p-5">
+
+                            <div class="fs-1 mb-3">
+                                🛒
+                            </div>
+
+                            <h5 class="fw-bold">
+                                No products found
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                There are currently no available
+                                products in this category.
+                            </p>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             AVAILABLE PRODUCT GRID
+                        ================================================= -->
+
+                        <div th:unless="${#lists.isEmpty(availableProducts)}"
+                             class="row row-cols-1
+                row-cols-sm-2
+                row-cols-md-2
+                row-cols-lg-3
+                row-cols-xl-4
+                g-3">
+
+
+                            <!-- =================================================
+                                 PRODUCT CARD
+                            ================================================= -->
+
+                            <div class="col"
+                                 th:each="prod : ${availableProducts}">
+
+                                <div class="card h-100 border-0 shadow-sm
+                        product-card">
+
+
+                                    <!-- =================================================
+                                         PRODUCT IMAGE
+                                    ================================================= -->
+
+                                    <div class="position-relative p-3 text-center product-image-box">
+
+                                        <img th:if="${prod.image != null
+                                and !prod.image.isEmpty()}"
+                                             th:src="@{ ${prod.image}}"
+                                             th:alt="${prod.name}"
+                                             class="img-fluid"
+                                             style="width: 100%;
+                                height: 200px;
+                                object-fit: contain;">
+
+
+                                        <div th:unless="${prod.image != null
+                                     and !prod.image.isEmpty()}"
+                                             class="d-flex
+                                flex-column
+                                align-items-center
+                                justify-content-center
+                                h-100
+                                text-muted">
+
+                                            <div class="fs-1">
+                                                📷
+                                            </div>
+
+                                            <small>
+                                                No Image
+                                            </small>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- =================================================
+                                         PRODUCT DETAILS
+                                    ================================================= -->
+
+                                    <div class="card-body p-3 d-flex
+                            flex-column">
+
+
+                                        <!-- DELIVERY -->
+
+                                        <div class="mb-2">
+
+                        <span class="badge bg-light
+                                     text-dark">
+
+                            🕘 9 MINS
+
+                        </span>
+
+                                        </div>
+
+
+                                        <!-- PRODUCT NAME -->
+
+                                        <h6 class="fw-bold text-dark mb-2"
+                                            th:text="${prod.name}">
+
+                                            Product Name
+
+                                        </h6>
+
+
+                                        <!-- STOCK -->
+
+                                        <div class="small text-muted mb-2">
+
+                        <span>
+                            In Stock:
+                        </span>
+
+                                            <span th:text="${prod.stock}">
+                            10
+                        </span>
+
+                                        </div>
+
+
+                                        <!-- PRICE + ADD -->
+
+                                        <div class="mt-auto
+                                d-flex
+                                justify-content-between
+                                align-items-center">
+
+                                            <div>
+
+                                                <div class="fw-bold fs-5"
+                                                     th:text="'₹' + ${#numbers.formatDecimal(
+                                         prod.price, 1, 2)}">
+
+                                                    ₹0.00
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <!-- ADD BUTTON -->
+                                            <form th:action="@{'/cart/add/' + ${prod.id}}"
+                                                  method="post"
+                                                  style="display: inline;">
+
+                                                <button type="submit"
+                                                        class="btn btn-outline-success fw-bold add-product-btn">
+                                                    ADD
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+
+
+
+
+                                    <!-- =================================================
+                                         ADMIN CONTROLS
+                                    ================================================= -->
+
+                                    <div sec:authorize="hasRole('ADMIN')"
+                                         class="card-footer bg-white
+                            border-0 p-3">
+
+                                        <div class="d-flex gap-2">
+
+
+                                            <!-- EDIT -->
+
+                                            <a th:href="@{/products/edit/{id}(id=${prod.id})}"
+                                               class="btn btn-outline-warning
+                                  btn-sm flex-grow-1">
+
+                                                ✏️ Edit
+
+                                            </a>
+
+
+                                            <!-- DELETE -->
+
+                                            <a th:href="@{/products/delete/{id}(id=${prod.id})}"
+                                               class="btn btn-outline-danger
+                                  btn-sm flex-grow-1"
+                                               th:data-confirm-delete="|Are you sure you want to delete ${prod.name}?|"
+                                               onclick="return confirm(
+                               this.getAttribute(
+                                   'data-confirm-delete'
+                               )
+                           )">
+
+                                                🗑️ Delete
+
+                                            </a>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div th:if="${not #lists.isEmpty(outOfStockProducts)}"
+                             class="mb-5">
+
+
+                            <div class="d-flex justify-content-between
+                                    align-items-center mb-3">
+
+                                <div>
+
+                                    <h4 class="fw-bold mb-1">
+                                        Out of Stock
+                                    </h4>
+
+                                    <small class="text-muted">
+                                        Currently unavailable
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- HORIZONTAL SCROLL -->
+
+                            <div class="d-flex gap-3 overflow-auto pb-2">
+
+
+                                <div th:each="prod : ${outOfStockProducts}"
+                                     class="flex-shrink-0 out-of-stock-item">
+
+
+                                    <div class="card h-100 border-0 shadow-sm
+                                            position-relative"
+                                         style="opacity: 0.55;">
+
+
+                                        <!-- IMAGE -->
+
+                                        <div class="p-3 text-center out-of-stock-image-box">
+
+
+                                            <img th:if="${prod.image != null
+                                         and !prod.image.isEmpty()}"
+                                                 th:src="@{'/uploads/' + ${prod.image}}"
+                                                 th:alt="${prod.name}"
+                                                 class="img-fluid product-image">
+
+
+                                            <div th:unless="${prod.image != null
+                                                         and !prod.image.isEmpty()}"
+                                                 class="d-flex align-items-center
+                                                    justify-content-center
+                                                    h-100 text-muted">
+
+                                                📷
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <!-- OUT OF STOCK BADGE -->
+
+                                        <div class="position-absolute
+                                                top-50 start-50
+                                                translate-middle">
+
+                                        <span class="badge bg-dark px-3 py-2">
+
+                                            OUT OF STOCK
+
+                                        </span>
+
+                                        </div>
+
+
+                                        <!-- PRODUCT INFO -->
+
+                                        <div class="card-body p-3">
+
+
+                                            <h6 class="fw-bold mb-2"
+                                                th:text="${prod.name}">
+
+                                                Product Name
+
+                                            </h6>
+
+
+                                            <div class="small text-muted mb-2">
+
+                                                Unavailable
+
+                                            </div>
+
+
+                                            <div class="fw-bold"
+                                                 th:text="'₹' + ${#numbers.formatDecimal(
+                                             prod.price, 1, 2)}">
+
+                                                ₹0.00
+
+                                            </div>
+
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                        <!-- =================================================
+                             PAGINATION
+                        ================================================= -->
+
+                        <nav th:if="${totalPages > 1}"
+                             class="mt-5">
+
+                            <ul class="pagination justify-content-center">
+
+
+                                <!-- PREVIOUS -->
+
+                                <li class="page-item"
+                                    th:classappend="${currentPage == 0}
+                ? ' disabled'">
+
+                                    <a class="page-link"
+                                       th:href="@{/products(
+                       categoryId=${selectedCategoryId},
+                       page=${currentPage - 1},
+                       sortField=${sortField},
+                       sortDir=${sortDir},
+                                    search=${search})}">
+
+                                        Previous
+
+                                    </a>
+
+                                </li>
+
+
+                                <!-- PAGE NUMBERS -->
+
+                                <li class="page-item"
+                                    th:each="i : ${#numbers.sequence(
+                    0, totalPages - 1)}"
+                                    th:classappend="${i == currentPage}
+                ? ' active'">
+
+                                    <a class="page-link"
+                                       th:href="@{/products(
+                       categoryId=${selectedCategoryId},
+                       page=${i},
+                       sortField=${sortField},
+                       sortDir=${sortDir},
+                                    search=${search})}"
+                                       th:text="${i + 1}">
+
+                                        1
+
+                                    </a>
+
+                                </li>
+
+
+                                <!-- NEXT -->
+
+                                <li class="page-item"
+                                    th:classappend="${currentPage ==
+                                 totalPages - 1}
+                                 ? ' disabled'">
+
+                                    <a class="page-link"
+                                       th:href="@{/products(
+                       categoryId=${selectedCategoryId},
+                       page=${currentPage + 1},
+                       sortField=${sortField},
+                       sortDir=${sortDir},
+                                    search=${search})}">
+
+                                        Next
+
+                                    </a>
+
+                                </li>
+
+                            </ul>
+
+                        </nav>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+    <!-- =========================================================
+         SCRIPTS
+    ========================================================= -->
+
+    <div th:replace="~{layout :: scripts}"></div>
+</div>
+</body>
+</html>

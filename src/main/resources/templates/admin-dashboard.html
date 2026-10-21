@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    ```
+    <title>Gladwin Product Suite - Admin Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f7fb;
+            font-family: Arial, sans-serif;
+            color: #263248;
+        }
+
+        .sidebar {
+            width: 245px;
+            min-height: 100vh;
+            background: #172554;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 25px 16px;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 35px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 13px 14px;
+            color: #dbeafe;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .main {
+            margin-left: 245px;
+            padding: 30px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .topbar h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin: 0;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 23px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+            height: 100%;
+            border: 1px solid #edf0f5;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .stat-icon {
+            font-size: 27px;
+            margin-bottom: 14px;
+        }
+
+        .section-card {
+            background: white;
+            padding: 23px;
+            border-radius: 14px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+            border: 1px solid #edf0f5;
+            margin-top: 25px;
+        }
+
+        .section-title {
+            font-size: 19px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .table th {
+            background: #f1f5f9;
+            color: #475569;
+            white-space: nowrap;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .quick-link {
+            display: block;
+            padding: 17px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #263248;
+            font-weight: bold;
+            height: 100%;
+            transition: 0.2s;
+        }
+
+        .quick-link:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+            transform: translateY(-2px);
+        }
+
+        .quick-link span {
+            display: block;
+            font-size: 25px;
+            margin-bottom: 10px;
+        }
+
+        .view-btn {
+            background: #2563eb;
+            color: white;
+            padding: 7px 12px;
+            text-decoration: none;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .view-btn:hover {
+            background: #1d4ed8;
+            color: white;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 100%;
+                min-height: auto;
+                position: relative;
+            }
+
+            .brand {
+                margin-bottom: 18px;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar a {
+                display: inline-block;
+                margin-right: 4px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .main {
+                padding: 14px;
+            }
+
+            .topbar h1 {
+                font-size: 23px;
+            }
+
+            .stat-value {
+                font-size: 23px;
+            }
+
+            .section-card {
+                padding: 14px;
+            }
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<!-- Sidebar -->
+
+<aside class="sidebar">
+
+    ```
+    <div class="brand">🏙️ Gladwin Admin</div>
+
+    <a th:href="@{/admin/dashboard}" class="active">
+        📊 Dashboard
+    </a>
+
+    <a th:href="@{/admin/orders}">
+        📦 Orders
+    </a>
+
+    <a th:href="@{/admin/category}">
+        🗂️ Categories
+    </a>
+
+    <a th:href="@{/admin/users}">
+        👥 User Management
+    </a>
+
+    <a th:href="@{/products}">
+        🛍️ View Store
+    </a>
+
+    <a th:href="@{/}">
+        🏠 Home
+    </a>
+
+    <form th:action="@{/logout}" method="post" class="mt-3">
+        <button type="submit" class="btn btn-outline-light w-100">
+            Logout
+        </button>
+    </form>
+    ```
+
+</aside>
+
+<!-- Main Content -->
+
+<main class="main">
+
+    ```
+    <div class="topbar">
+        <div>
+            <h1>Dashboard Overview</h1>
+            <p class="subtitle">
+                Welcome to your Gladwin Product Suite administration panel.
+            </p>
+        </div>
+
+        <span class="badge text-bg-primary p-2">
+        Administrator
+    </span>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row g-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-label">Total Revenue from Paid Orders</div>
+                <div class="stat-value">
+                    ₹<span th:text="${#numbers.formatDecimal(totalRevenue, 1, 2)}">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-value" th:text="${totalOrders}">0</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon">🛍️</div>
+                <div class="stat-label">Total Products</div>
+                <div class="stat-value" th:text="${totalProducts}">0</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-label">Registered Users</div>
+                <div class="stat-value" th:text="${totalUsers}">0</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Sales Trajectory -->
+    <div class="section-card">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+            <div>
+                <h2 class="section-title mb-1">📈 Sales Trajectory</h2>
+                <p class="text-muted mb-0">
+                    Monthly revenue from paid orders over the last 6 months
+                </p>
+            </div>
+
+            <span class="badge text-bg-success">Last 6 Months</span>
+        </div>
+
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="salesChart"></canvas>
+        </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-card">
+
+        <h2 class="section-title">⚡ Quick Actions</h2>
+
+        <div class="row g-3">
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a th:href="@{/admin/orders}" class="quick-link">
+                    <span>📦</span>
+                    Manage Orders
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a th:href="@{/admin/category}" class="quick-link">
+                    <span>🗂️</span>
+                    Manage Categories
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a th:href="@{/admin/users}" class="quick-link">
+                    <span>👥</span>
+                    Manage Users
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a th:href="@{/products}" class="quick-link">
+                    <span>🛍️</span>
+                    View Store
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Low Stock Alerts -->
+    <div class="section-card">
+
+        <h2 class="section-title">⚠️ Inventory Alerts</h2>
+
+        <!-- Summary -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-6">
+                <div class="p-3 rounded border bg-light">
+                    <div class="text-muted">Low-Stock Products</div>
+                    <h3 class="text-warning"
+                        th:text="${lowStockCount}">0</h3>
+                    <small>Products with 1–5 units remaining</small>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 rounded border bg-light">
+                    <div class="text-muted">Out-of-Stock Products</div>
+                    <h3 class="text-danger"
+                        th:text="${outOfStockCount}">0</h3>
+                    <small>Products with no available units</small>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Product List -->
+        <div class="table-responsive">
+
+            <table class="table table-hover">
+
+                <thead>
+                <tr>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
+                    <th>Available Stock</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="product : ${lowStockProducts}">
+
+                    <td th:text="${product.id}"></td>
+
+                    <td th:text="${product.name}"></td>
+
+                    <td th:text="${product.stock}"></td>
+
+                    <td>
+                    <span th:if="${product.stock == 0}"
+                          class="badge bg-danger">
+                        Out of Stock
+                    </span>
+
+                        <span th:if="${product.stock > 0}"
+                              class="badge bg-warning text-dark">
+                        Low Stock
+                    </span>
+                    </td>
+
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(lowStockProducts)}">
+                    <td colspan="4"
+                        class="text-center text-success py-4">
+                        ✅ All products have sufficient stock!
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="section-card">
+
+        <h2 class="section-title">🧾 Recent Orders</h2>
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="order : ${recentOrders}">
+
+                    <td th:text="${order.id}"></td>
+
+                    <td th:text="${order.customer != null
+                              ? order.customer.username
+                              : 'Unknown'}"></td>
+
+                    <td th:text="${order.orderDate != null
+                              ? #temporals.format(order.orderDate, 'dd MMM yyyy')
+                              : 'N/A'}"></td>
+
+                    <td>
+                        ₹<span th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)}"></span>
+                    </td>
+
+                    <td th:text="${order.paymentStatus}"></td>
+
+                    <td>
+                    <span class="badge text-bg-primary"
+                          th:text="${order.orderStatus}">
+                    </span>
+                    </td>
+
+                    <td>
+                        <a th:href="@{/orders/{id}(id=${order.id})}"
+                           class="view-btn">
+                            View
+                        </a>
+                    </td>
+
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(recentOrders)}">
+                    <td colspan="7" class="text-center text-muted py-4">
+                        No orders have been placed yet.
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <a th:href="@{/admin/orders}" class="btn btn-primary">
+            View All Orders →
+        </a>
+
+    </div>
+    ```
+
+</main>
+<script th:inline="javascript">
+
+    const salesLabels = [[${salesLabels}]];
+    const salesData = [[${salesData}]];
+
+    const ctx = document.getElementById('salesChart');
+
+    new Chart(ctx, {
+        type: 'line',
+
+        data: {
+            labels: salesLabels,
+
+            datasets: [{
+                label: 'Revenue (₹)',
+                data: salesData,
+
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+
+                pointRadius: 5,
+                pointHoverRadius: 8
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Revenue: ₹' +
+                                context.parsed.y.toLocaleString('en-IN', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                        }
+                    }
+                }
+            },
+
+            scales: {
+                y: {
+                    beginAtZero: true,
+
+                    title: {
+                        display: true,
+                        text: 'Revenue (₹)'
+                    },
+
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + Number(value).toLocaleString('en-IN');
+                        }
+                    }
+                },
+
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month'
+                    }
+                }
+            }
+        }
+    });
+
+</script>
+
+</body>
+</html>

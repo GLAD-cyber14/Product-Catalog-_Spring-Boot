@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      lang="en">
+
+<head th:replace="~{layout :: header-fragment('Checkout')}"></head>
+
+<body>
+
+<div th:replace="~{layout :: navbar}"></div>
+
+<div class="container py-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h2 class="fw-bold">
+            🧾 Checkout
+        </h2>
+
+        <a th:href="@{/cart}"
+           class="btn btn-outline-secondary">
+            ← Back to Cart
+        </a>
+
+    </div>
+    <!-- SHIPPING ADDRESS -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h4 class="fw-bold mb-3">📦 Shipping Address</h4>
+
+            <div class="alert alert-success"
+                 th:if="${addressSuccess}"
+                 th:text="${addressSuccess}">
+            </div>
+
+            <form th:action="@{/checkout/save-address}" method="post">
+
+                <div class="mb-3">
+                    <label for="phoneNumber" class="form-label">
+                        Phone Number
+                    </label>
+                    <input type="tel"
+                           id="phoneNumber"
+                           name="phoneNumber"
+                           class="form-control"
+                           th:value="${user.phoneNumber}"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="addressLine" class="form-label">
+                        Full Delivery Address
+                    </label>
+                    <textarea id="addressLine"
+                              name="addressLine"
+                              class="form-control"
+                              rows="3"
+                              th:text="${user.addressLine}"
+                              required></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="city" class="form-label">City</label>
+                        <input type="text"
+                               id="city"
+                               name="city"
+                               class="form-control"
+                               th:value="${user.city}"
+                               required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="state" class="form-label">State</label>
+                        <input type="text"
+                               id="state"
+                               name="state"
+                               class="form-control"
+                               th:value="${user.state}"
+                               required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="postalCode" class="form-label">
+                            Postal Code
+                        </label>
+                        <input type="text"
+                               id="postalCode"
+                               name="postalCode"
+                               class="form-control"
+                               th:value="${user.postalCode}"
+                               required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-outline-primary">
+                    💾 Save Shipping Address
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- LEFT SIDE : ORDER DETAILS -->
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body">
+
+                    <h4 class="fw-bold mb-4">
+                        Order Summary
+                    </h4>
+
+
+                    <!-- Each cart item -->
+                    <div th:each="item : ${cartItems}"
+                         class="row align-items-center border-bottom py-3">
+
+                        <!-- Product image -->
+                        <div class="col-md-2 text-center">
+
+                            <img th:if="${item.product.image != null}"
+                                 th:src="@{ ${item.product.image}}"
+                                 alt="Product"
+                                 class="img-fluid rounded"
+                                 style="max-height:90px;
+                                        object-fit:contain;">
+
+                        </div>
+
+
+                        <!-- Product name -->
+                        <div class="col-md-4">
+
+                            <h5 class="fw-bold"
+                                th:text="${item.product.name}">
+                                Product Name
+                            </h5>
+
+                            <p class="text-muted mb-0">
+
+                                ₹<span
+                                    th:text="${item.product.price}">
+                                    0
+                                </span>
+
+                            </p>
+
+                        </div>
+
+
+                        <!-- Quantity -->
+                        <div class="col-md-2 text-center">
+
+                            <span class="text-muted">
+                                Quantity
+                            </span>
+
+                            <div class="fw-bold"
+                                 th:text="${item.quantity}">
+                                1
+                            </div>
+
+                        </div>
+
+
+                        <!-- Item total -->
+                        <div class="col-md-4 text-end">
+
+                            <span class="fw-bold">
+
+                                ₹<span
+                                    th:text="${item.product.price * item.quantity}">
+                                    0
+                                </span>
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT SIDE : PAYMENT -->
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body">
+
+                    <h4 class="fw-bold mb-4">
+                        Payment Method
+                    </h4>
+
+
+                    <!-- Cash on Delivery -->
+                    <form th:action="@{/api/gladwin/cash-on-delivery}"
+                          method="post">
+                    <div class="border rounded p-3 mb-3">
+
+                        <div class="form-check">
+
+                            <input class="form-check-input"
+                                   type="radio"
+                                   name="paymentMethod"
+                                   id="cashPayment"
+                                   value="CASH"
+                                   checked>
+
+                            <label class="form-check-label fw-bold"
+                                   for="cashPayment">
+
+                                💵 Cash on Delivery
+
+                            </label>
+
+                        </div>
+
+                        <small class="text-muted ms-4">
+                            Pay when your order is delivered.
+                        </small>
+
+                        <button type="submit"
+                                id="cashOrderBtn"
+                                class="btn btn-success w-100 mt-3">
+                            Place Order with Cash on Delivery
+                        </button>
+
+
+                </div>
+                        </form>
+
+
+                    <!-- Card Payment -->
+                    <div class="border rounded p-3 mb-4">
+
+                        <div class="form-check">
+
+                            <input class="form-check-input"
+                                   type="radio"
+                                   name="paymentMethod"
+                                   id="cardPayment"
+                                   value="CARD">
+
+                            <label class="form-check-label fw-bold"
+                                   for="cardPayment">
+
+                                💳 Card Payment
+
+                            </label>
+
+                        </div>
+                        <button type="button" id="changePaymentBtn" class="btn btn-outline-primary btn-sm">
+                            Change Payment Method
+                        </button>
+
+                        <small class="text-muted ms-4">
+                            Pay securely using your debit or credit card.
+                        </small>
+
+                        <a th:href="@{/stripe/checkout}"
+                           id="cardOrderBtn"
+                           class="btn btn-primary w-100 mt-3">
+                            Pay with Card
+                        </a>
+                    </div>
+
+
+                    <hr>
+
+
+                    <!-- Total -->
+                    <div class="d-flex justify-content-between">
+
+                        <span class="fw-bold">
+                            Total
+                        </span>
+
+                        <span class="fw-bold fs-4">
+
+                            ₹<span th:text="${cartTotal}">
+                                0
+                            </span>
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+    const cashPayment = document.getElementById('cashPayment');
+    const cardPayment = document.getElementById('cardPayment');
+    const changePaymentBtn = document.getElementById('changePaymentBtn');
+
+    const cashOrderBtn = document.getElementById('cashOrderBtn');
+    const cardOrderBtn = document.getElementById('cardOrderBtn');
+
+    function updatePaymentOptions() {
+
+        if (cashPayment.checked) {
+
+            // Enable COD and disable Card
+            cashPayment.disabled = false;
+            cardPayment.disabled = true;
+
+            // COD button bright and enabled
+            cashOrderBtn.disabled = false;
+            cashOrderBtn.style.opacity = '1';
+            cashOrderBtn.style.cursor = 'pointer';
+
+            // Card button dim and disabled
+            cardOrderBtn.style.opacity = '0.5';
+            cardOrderBtn.style.pointerEvents = 'none';
+            cardOrderBtn.style.cursor = 'not-allowed';
+
+        } else if (cardPayment.checked) {
+
+            // Disable COD and enable Card
+            cashPayment.checked = false;
+            cashPayment.disabled = true;
+            cardPayment.disabled = false;
+
+            // COD button dim and disabled
+            cashOrderBtn.disabled = true;
+            cashOrderBtn.style.opacity = '0.5';
+            cashOrderBtn.style.cursor = 'not-allowed';
+
+            // Card button bright and enabled
+            cardOrderBtn.style.opacity = '1';
+            cardOrderBtn.style.pointerEvents = 'auto';
+            cardOrderBtn.style.cursor = 'pointer';
+        }
+    }
+
+    changePaymentBtn.addEventListener('click', function () {
+
+        if (cashPayment.checked) {
+
+            // Switch from COD to Card
+            cashPayment.checked = false;
+            cashPayment.disabled = true;
+
+            cardPayment.disabled = false;
+            cardPayment.checked = true;
+
+        } else {
+
+            // Switch from Card to COD
+            cardPayment.checked = false;
+            cardPayment.disabled = true;
+
+            cashPayment.disabled = false;
+            cashPayment.checked = true;
+        }
+
+        updatePaymentOptions();
+    });
+
+    // Set the initial payment state
+    updatePaymentOptions();
+</script>
+
+<!-- Bootstrap JS -->
+<div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>
