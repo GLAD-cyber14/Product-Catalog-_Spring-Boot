@@ -1,8 +1,8 @@
 name: Keep Render App Awake
 
-on:
+'on':
 schedule:
-- cron: '*/10 * * * *'
+- cron: "*/10 * * * *"
 workflow_dispatch:
 
 jobs:
@@ -10,4 +10,5 @@ ping-backend:
 runs-on: ubuntu-latest
 steps:
 - name: Ping Render Backend
-run: curl -L --silent --show-error --max-time 30 -o /dev/null https://product-catalog-spring-boot.onrender.com/
+run: |
+curl -L --silent --show-error --max-time 30 -o /dev/null -w "%{http_code}" https://product-catalog-spring-boot.onrender.com/
