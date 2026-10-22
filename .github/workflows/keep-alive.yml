@@ -2,8 +2,8 @@ name: Keep Render App Awake
 
 on:
   schedule:
-    # Runs every 14 minutes, every day of the week
-    - cron: '*/14 * * * *'
+    # Safely wrapped in double quotes and changed to 10 minutes to beat delays
+    - cron: "*/10 * * * *"
 
 jobs:
   ping-backend:
