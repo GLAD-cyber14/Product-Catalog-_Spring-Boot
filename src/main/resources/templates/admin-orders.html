@@ -137,13 +137,15 @@
                               method="post"
                               class="status-form">
 
+
                             <input type="hidden"
                                    name="orderId"
                                    th:value="${order.id}">
 
                             <select name="status"
                                     class="form-select form-select-sm"
-                                    required>
+                                    required
+                                    th:disabled="${order.orderStatus != null and (order.orderStatus.equalsIgnoreCase('DELIVERED') or order.orderStatus.equalsIgnoreCase('CANCELLED'))}">
 
                                 <option value="PLACED"
                                         th:selected="${order.orderStatus == 'PLACED'}">
@@ -173,12 +175,21 @@
                             </select>
 
                             <button type="submit"
-                                    class="btn btn-success btn-sm">
+                                    class="btn btn-success btn-sm"
+                                    th:disabled="${order.orderStatus != null and (order.orderStatus.equalsIgnoreCase('DELIVERED') or order.orderStatus.equalsIgnoreCase('CANCELLED'))}">
                                 Save
                             </button>
 
                         </form>
+
+                        <span th:if="${order.orderStatus != null and (order.orderStatus.equalsIgnoreCase('DELIVERED') or order.orderStatus.equalsIgnoreCase('CANCELLED'))}"
+                              class="badge bg-secondary mt-2">
+    🔒 Order Locked
+</span>
+
+
                     </td>
+
 
                     <td>
                         <a th:href="@{/orders/{id}(id=${order.id})}"

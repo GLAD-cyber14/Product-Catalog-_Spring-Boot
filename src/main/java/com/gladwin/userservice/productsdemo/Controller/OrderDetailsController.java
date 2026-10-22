@@ -7,7 +7,14 @@ import com.gladwin.userservice.productsdemo.Repository.AppUserRepository;
 import com.gladwin.userservice.productsdemo.Repository.OrderRepository;
 import com.gladwin.userservice.productsdemo.Repository.OrderItemRepository;
 
+import com.gladwin.userservice.productsdemo.service.InvoicePdfService;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
 import java.util.List;
+
 import com.gladwin.userservice.productsdemo.Model.OrderItem;
 import com.gladwin.userservice.productsdemo.Model.Product;
 import com.gladwin.userservice.productsdemo.service.OrderCancellationService;
@@ -41,6 +48,7 @@ public class OrderDetailsController {
     private final ProductRepository productRepository;
     private final StripeRefundService stripeRefundService;
     private final EmailService emailService;
+    private final InvoicePdfService invoicePdfService;
 
     public OrderDetailsController(
             OrderRepository orderRepository,
@@ -49,7 +57,8 @@ public class OrderDetailsController {
             ProductRepository productRepository,
             StripeRefundService stripeRefundService,
             EmailService emailService,
-            OrderCancellationService orderCancellationService) {
+            OrderCancellationService orderCancellationService,
+            InvoicePdfService invoicePdfService) {
 
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -58,6 +67,7 @@ public class OrderDetailsController {
         this.productRepository = productRepository;
         this.stripeRefundService = stripeRefundService;
         this.emailService = emailService;
+        this.invoicePdfService = invoicePdfService;
     }
 
 
@@ -100,6 +110,51 @@ public class OrderDetailsController {
         model.addAttribute("orderItems", orderItems);
 
         return "order-details";
+    }
+
+    @GetMapping("/{orderId}/invoice")
+    public ResponseEntity<byte[]> downloadInvoice(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+
+        // Find the logged-in user
+        AppUser user = appUserRepository
+                .findByUsername(authentication.getName())
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        // Find the order
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        // Allow customers to download only their own invoices.
+        // Admins can download invoices for any order.
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin &&
+                (order.getCustomer() == null ||
+                        !order.getCustomer().getId().equals(user.getId()))) {
+
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        // Retrieve the products belonging to this order
+        List<OrderItem> orderItems =
+                orderItemRepository.findByOrderId(orderId);
+
+        // Generate the PDF
+        byte[] pdf = invoicePdfService.generateInvoice(order, orderItems);
+
+        // Return the PDF as a downloadable file
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"invoice-" + orderId + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
     @PostMapping("/{orderId}/cancel")
     public String cancelOrder(

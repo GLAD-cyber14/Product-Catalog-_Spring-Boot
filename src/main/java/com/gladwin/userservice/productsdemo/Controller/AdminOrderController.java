@@ -82,9 +82,23 @@ public class AdminOrderController {
                                 "Order not found"
                         ));
 
-        order.setOrderStatus(status);
 
+        // Lock orders that are already delivered or cancelled
+        String currentStatus = order.getOrderStatus();
+
+        if ("DELIVERED".equalsIgnoreCase(currentStatus) ||
+                "CANCELLED".equalsIgnoreCase(currentStatus)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "This order is locked and its status cannot be changed"
+            );
+        }
+
+        // Update the status only if the order is not locked
+        order.setOrderStatus(status);
         orderRepository.save(order);
+
 
         return "redirect:/admin/orders";
     }

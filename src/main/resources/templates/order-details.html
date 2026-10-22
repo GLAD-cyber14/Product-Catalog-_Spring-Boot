@@ -392,6 +392,15 @@
                 </div>
             </div>
 
+            <!-- Estimated Delivery Date -->
+            <div>
+                <div class="label">Estimated Delivery</div>
+                <div class="value"
+                     th:if="${order.orderDate != null}"
+                     th:text="${#temporals.format(order.orderDate.plusDays(5), 'dd MMM yyyy')}">
+                </div>
+            </div>
+
             <div>
                 <div class="label">Order Status</div>
                 <div class="value" th:text="${order.orderStatus}"></div>
@@ -480,6 +489,15 @@
     </div>
     <!-- Navigation -->
     <div class="buttons">
+
+
+        <!-- Download Invoice PDF -->
+        <a th:href="@{/orders/{orderId}/invoice(orderId=${order.id})}"
+           class="btn btn-primary">
+            📄 Download Invoice (PDF)
+        </a>
+
+
 
         <!-- Cancel Order button: only for eligible orders -->
         <form th:if="${order.orderStatus != null
