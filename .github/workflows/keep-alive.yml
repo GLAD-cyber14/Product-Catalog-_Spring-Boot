@@ -10,6 +10,4 @@ ping-backend:
 runs-on: ubuntu-latest
 steps:
 - name: Ping Render Backend
-run: |
-curl --fail --silent --show-error --max-time 30 
-https://product-catalog-spring-boot.onrender.com/
+run: curl -L --silent --show-error --max-time 30 -o /dev/null -w "%{http_code}" https://product-catalog-spring-boot.onrender.com/
