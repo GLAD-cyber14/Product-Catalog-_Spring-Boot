@@ -1,0 +1,14 @@
+name: Keep Render App Awake
+
+on:
+  schedule:
+    # Runs every 14 minutes, every day of the week
+    - cron: '*/14 * * * *'
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Ping Request
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" https://onrender.com
