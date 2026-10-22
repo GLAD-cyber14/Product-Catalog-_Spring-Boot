@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Send Ping Request
         run: |
-          curl -s -o /dev/null -w "%{http_code}" https://onrender.com
+          curl -s -o /dev/null -w "%{http_code}" https://product-catalog-spring-boot.onrender.com
