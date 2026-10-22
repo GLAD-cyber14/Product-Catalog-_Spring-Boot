@@ -1,8 +1,10 @@
 name: Keep Render App Awake
+
 'on':
 schedule:
 - cron: "*/10 * * * *"
 workflow_dispatch:
+
 jobs:
 ping-backend:
 runs-on: ubuntu-latest
