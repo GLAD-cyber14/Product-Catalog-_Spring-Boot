@@ -241,8 +241,23 @@ public class AdminUserController {
         user.setLastName(lastName);
         user.setUsername(username);
         user.setEmail(email);
-        user.setRole(role);
 
+// Prevent an existing ADMIN from being changed to USER
+        if ("ADMIN".equalsIgnoreCase(user.getRole())
+                && "USER".equalsIgnoreCase(role)) {
+
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage",
+                    "An ADMIN account cannot be changed to USER."
+            );
+
+            return "redirect:/admin/users";
+        }
+
+        // Only the username "admin" is protected from role changes
+        if (!"admin".equalsIgnoreCase(user.getUsername())) {
+            user.setRole(role);
+        }
 
         // =====================================================
         // UPDATE PASSWORD ONLY IF ENTERED

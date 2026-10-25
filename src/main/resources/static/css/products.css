@@ -541,5 +541,9 @@ body.bg-light .pagination .page-item.active .page-link { color:#fff !important; 
     .modern-navbar .nav-user-management:hover {
         color: #4f46e5 !important;
         background: linear-gradient(135deg, #eef2ff, #e0f2fe) !important;
+
     }
+
+
+
 }
