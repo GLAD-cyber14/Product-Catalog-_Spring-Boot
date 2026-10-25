@@ -1,14 +1,15 @@
-name: Keep Render App Awake
+name: Keep Alive
 
 on:
   schedule:
-    # Runs every 14 minutes, every day of the week
-    - cron: '*/14 * * * *'
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
 
 jobs:
   ping-backend:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Send Ping Request
+      - name: Call backend
         run: |
-          curl -s -o /dev/null -w "%{http_code}" https://onrender.com
+          curl -I https://product-catalog-spring-boot.onrender.com
