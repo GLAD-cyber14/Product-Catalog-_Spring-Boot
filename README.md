@@ -1,3 +1,5 @@
+<img width="1855" height="917" alt="Opera Snapshot_2026-10-27_015651_product-catalog-spring-boot onrender com" src="https://github.com/user-attachments/assets/59694cb2-063a-43ed-9841-8efc2e471c47" />
+<img width="1855" height="917" alt="Opera Snapshot_2026-10-27_015651_product-catalog-spring-boot onrender com" src="https://github.com/user-attachments/assets/10be4455-0910-4d66-b74e-117c927d6d9c" />
 # 🛒 Spring Boot Product & Order Management Suite
 
 A robust, full-stack E-Commerce and Order Lifecycle Management application built with **Spring Boot**, **Thymeleaf**, **Spring Data JPA**, **Stripe API**, and **Server-Sent Events (SSE)** for real-time order tracking.
@@ -88,14 +90,14 @@ cloudinary.api_secret=your_api_secret
     <td align="center"><b>Admin User Management</b></td>
   </tr>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/8ff96256-bbd6-45fb-a3cf-cc6d3e6fe76" width="100%" alt="Order Details"></td>
+    <td><img src="https://github.com/user-attachments/assets/c53c2ee9-63ac-4dfd-af3e-9004be62ba58" width="100%" alt="Order Details"></td>
     <td><img src="https://github.com/user-attachments/assets/ccff979a-b390-4c36-a181-45ebd93cfe3a" width="100%" alt="Admin User Management"></td>
   </tr>
   <tr>
     <td align="center"><em>Track order status live with interactive step progress</em></td>
     <td align="center"><em>Manage user accounts, roles (ADMIN/USER), and permissions</em></td>
   </tr>
-
+</table>
 ---
 
 ## 📝 License
