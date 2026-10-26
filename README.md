@@ -1,5 +1,3 @@
-<img width="1855" height="917" alt="Opera Snapshot_2026-10-27_015651_product-catalog-spring-boot onrender com" src="https://github.com/user-attachments/assets/59694cb2-063a-43ed-9841-8efc2e471c47" />
-<img width="1855" height="917" alt="Opera Snapshot_2026-10-27_015651_product-catalog-spring-boot onrender com" src="https://github.com/user-attachments/assets/10be4455-0910-4d66-b74e-117c927d6d9c" />
 # 🛒 Spring Boot Product & Order Management Suite
 
 A robust, full-stack E-Commerce and Order Lifecycle Management application built with **Spring Boot**, **Thymeleaf**, **Spring Data JPA**, **Stripe API**, and **Server-Sent Events (SSE)** for real-time order tracking.
