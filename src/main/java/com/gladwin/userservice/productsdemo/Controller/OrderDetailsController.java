@@ -269,31 +269,36 @@ public class OrderDetailsController {
         }
 
         // Send an email only for Stripe orders whose refund was accepted.
-        if ("STRIPE".equalsIgnoreCase(order.getPaymentMethod())
-                && order.getPaymentStatus() != null
+        // Send an email for orders whose refund was accepted, using the latest profile email.
+        if (order.getPaymentStatus() != null
                 && ("REFUNDED".equalsIgnoreCase(order.getPaymentStatus())
                 || "REFUND_PENDING".equalsIgnoreCase(
-                order.getPaymentStatus()))) {
+                order.getPaymentStatus())
+                || "CANCELLED".equalsIgnoreCase(order.getOrderStatus()))) {
 
             AppUser customer = order.getCustomer();
 
-            if (customer != null &&
-                    customer.getEmail() != null &&
-                    !customer.getEmail().isBlank()) {
+            if (customer != null) {
+                // 🚀 Fetch the absolute latest user entity from DB to get the newly updated profile email
+                AppUser latestCustomer = appUserRepository.findById(customer.getId()).orElse(customer);
 
-                try {
-                    emailService.sendRefundConfirmation(
-                            customer.getEmail(),
-                            order.getId(),
-                            order.getTotalAmount(),
-                            "REFUNDED".equalsIgnoreCase(order.getPaymentStatus())
-                    );
-                } catch (RuntimeException ex) {
-                    // An email failure must not trigger another refund.
-                    System.err.println(
-                            "Refund email could not be sent for order "
-                                    + orderId + ": " + ex.getMessage()
-                    );
+                if (latestCustomer.getEmail() != null &&
+                        !latestCustomer.getEmail().isBlank()) {
+
+                    try {
+                        emailService.sendRefundConfirmation(
+                                latestCustomer.getEmail(),
+                                order.getId(),
+                                order.getTotalAmount(),
+                                "REFUNDED".equalsIgnoreCase(order.getPaymentStatus())
+                        );
+                    } catch (RuntimeException ex) {
+                        // An email failure must not trigger another refund.
+                        System.err.println(
+                                "Refund email could not be sent for order "
+                                        + orderId + ": " + ex.getMessage()
+                        );
+                    }
                 }
             }
         }

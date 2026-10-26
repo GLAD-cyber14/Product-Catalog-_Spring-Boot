@@ -51,6 +51,9 @@ public class ProfileController {
     public String updateProfile(
             Authentication authentication,
 
+            @RequestParam("email")
+            String email,
+
             @RequestParam("firstName")
             String firstName,
 
@@ -69,19 +72,25 @@ public class ProfileController {
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
 
+        user.setEmail(email);
         user.setFirstName(firstName);
         user.setLastName(lastName);
 
         // Upload a new profile picture if selected
+        // Upload a new profile picture if selected
         if (profileImage != null && !profileImage.isEmpty()) {
 
-            if (profileImage.getContentType() == null
-                    || !profileImage.getContentType()
-                    .startsWith("image/")) {
+            String contentType = profileImage.getContentType();
+            String originalFilename = profileImage.getOriginalFilename();
 
+            // Check if content-type starts with image/ OR if file extension is a common image format
+            boolean isValidImage = (contentType != null && contentType.startsWith("image/"))
+                    || (originalFilename != null && originalFilename.toLowerCase().matches(".*\\.(jpg|jpeg|png|gif|webp|bmp|heic|svg)$"));
+
+            if (!isValidImage) {
                 redirectAttributes.addFlashAttribute(
                         "errorMessage",
-                        "Please select a valid image.");
+                        "Please select a valid image file.");
 
                 return "redirect:/profile";
             }
@@ -100,4 +109,3 @@ public class ProfileController {
         return "redirect:/profile";
     }
 }
-
