@@ -108,7 +108,8 @@ public class AdminOrderController {
             orderSseService.notifyOrderStatus(
                     order.getCustomer().getId(),
                     order.getId(),
-                    order.getOrderStatus()
+                    order.getOrderStatus(),
+                    order.getPaymentStatus()
             );
         }
 
@@ -121,7 +122,6 @@ public class AdminOrderController {
             @RequestParam Long orderId,
             Authentication authentication) {
 
-        // Only admins can mark orders as paid
         checkAdmin(authentication);
 
         Order order = orderRepository.findById(orderId)
@@ -131,7 +131,6 @@ public class AdminOrderController {
                                 "Order not found"
                         ));
 
-        // Do not allow payment for cancelled orders
         if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -139,7 +138,6 @@ public class AdminOrderController {
             );
         }
 
-        // Only allow this action for COD orders
         if (order.getPaymentMethod() == null ||
                 !order.getPaymentMethod().equalsIgnoreCase("COD")) {
             throw new ResponseStatusException(
@@ -148,7 +146,6 @@ public class AdminOrderController {
             );
         }
 
-        // Do not process the same payment twice
         if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
             return "redirect:/admin/orders";
         }
@@ -156,6 +153,16 @@ public class AdminOrderController {
         // Mark payment as received
         order.setPaymentStatus("PAID");
         orderRepository.save(order);
+
+        // 🚀 BROADCAST PAYMENT STATUS UPDATE VIA SSE INSTANTLY
+        if (order.getCustomer() != null) {
+            orderSseService.notifyOrderStatus(
+                    order.getCustomer().getId(),
+                    order.getId(),
+                    order.getOrderStatus(),
+                    order.getPaymentStatus()
+            );
+        }
 
         return "redirect:/admin/orders";
     }

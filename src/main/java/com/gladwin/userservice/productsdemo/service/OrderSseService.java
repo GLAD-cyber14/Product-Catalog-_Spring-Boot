@@ -33,11 +33,12 @@ public class OrderSseService {
         return emitter;
     }
 
-    // Notify a customer when their order status changes.
+    // Notify a customer when their order or payment status changes.
     public void notifyOrderStatus(
             Long customerId,
             Long orderId,
-            String status) {
+            String status,
+            String paymentStatus) {
 
         List<SseEmitter> emitters = connections.get(customerId);
 
@@ -52,7 +53,8 @@ public class OrderSseService {
                                 .name("order-status")
                                 .data(Map.of(
                                         "orderId", orderId,
-                                        "status", status
+                                        "status", status,
+                                        "paymentStatus", paymentStatus != null ? paymentStatus : "PENDING"
                                 ))
                 );
             } catch (IOException | IllegalStateException ex) {

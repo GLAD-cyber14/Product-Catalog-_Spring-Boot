@@ -263,7 +263,8 @@ public class OrderDetailsController {
             orderSseService.notifyOrderStatus(
                     order.getCustomer().getId(),
                     order.getId(),
-                    order.getOrderStatus()
+                    order.getOrderStatus(),
+                    order.getPaymentStatus()
             );
         }
 

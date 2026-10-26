@@ -267,7 +267,7 @@
     <h1>📦 Order Details</h1>
 
     <!-- Order Tracking -->
-    <div class="card">
+    <div class="card" style="overflow:hidden;">
 
         <h2>🚚 Track Your Order</h2>
 
@@ -282,9 +282,11 @@
                      th:style="${order.orderStatus.toUpperCase() == 'PLACED'
                          ? 'width: 0%'
                          : order.orderStatus.toUpperCase() == 'PROCESSING'
-                         ? 'width: 25%'
+                         ? 'width: 38%'
                          : order.orderStatus.toUpperCase() == 'SHIPPED'
-                         ? 'width: 50%'
+                         ? 'width: 76%'
+                         : order.orderStatus.toUpperCase() == 'DELIVERED'
+                         ? 'width: 76%'
                          : 'width: 0%'}">
                 </div>
 
@@ -414,7 +416,7 @@
 
             <div>
                 <div class="label">Payment Status</div>
-                <div class="value" th:text="${order.paymentStatus}"></div>
+                <div class="value" id="paymentStatusValue" th:text="${order.paymentStatus}"></div>
             </div>
 
         </div>
@@ -560,6 +562,14 @@
                         trackingStatusValue.textContent = status;
                     }
 
+                    // 🚀 UPDATE PAYMENT STATUS DYNAMICALLY IN REAL-TIME
+                    if (data.paymentStatus) {
+                        const paymentStatusElement = document.getElementById("paymentStatusValue");
+                        if (paymentStatusElement) {
+                            paymentStatusElement.textContent = data.paymentStatus;
+                        }
+                    }
+
                     // 2. Update Progress Bar and Timeline Steps dynamically
                     const progressBar = document.querySelector(".tracking-progress");
                     const steps = document.querySelectorAll(".tracking-step");
@@ -598,7 +608,7 @@
                         }
                     }
                     else if (status === "DELIVERED") {
-                        if (progressBar) progressBar.style.width = "100%";
+                        if (progressBar) progressBar.style.width = "76%";
                         steps.forEach(step => {
                             step.classList.add("completed");
                             const icon = step.querySelector(".tracking-icon");
