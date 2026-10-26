@@ -7,6 +7,7 @@ import com.gladwin.userservice.productsdemo.Repository.AppUserRepository;
 import com.gladwin.userservice.productsdemo.Repository.OrderRepository;
 import com.gladwin.userservice.productsdemo.Repository.OrderItemRepository;
 
+import com.gladwin.userservice.productsdemo.service.OrderSseService;
 import com.gladwin.userservice.productsdemo.service.InvoicePdfService;
 
 import org.springframework.http.HttpHeaders;
@@ -49,6 +50,7 @@ public class OrderDetailsController {
     private final StripeRefundService stripeRefundService;
     private final EmailService emailService;
     private final InvoicePdfService invoicePdfService;
+    private final OrderSseService orderSseService;
 
     public OrderDetailsController(
             OrderRepository orderRepository,
@@ -58,7 +60,8 @@ public class OrderDetailsController {
             StripeRefundService stripeRefundService,
             EmailService emailService,
             OrderCancellationService orderCancellationService,
-            InvoicePdfService invoicePdfService) {
+            InvoicePdfService invoicePdfService,
+            OrderSseService orderSseService) {
 
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -68,6 +71,7 @@ public class OrderDetailsController {
         this.stripeRefundService = stripeRefundService;
         this.emailService = emailService;
         this.invoicePdfService = invoicePdfService;
+        this.orderSseService = orderSseService;
     }
 
 
@@ -252,6 +256,15 @@ public class OrderDetailsController {
 
             return "redirect:/orders/" + orderId
                     + "?error=cancellation_failed";
+        }
+
+        // Notify the customer that the order was cancelled.
+        if (order.getCustomer() != null) {
+            orderSseService.notifyOrderStatus(
+                    order.getCustomer().getId(),
+                    order.getId(),
+                    order.getOrderStatus()
+            );
         }
 
         // Send an email only for Stripe orders whose refund was accepted.

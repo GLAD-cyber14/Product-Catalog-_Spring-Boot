@@ -130,6 +130,7 @@ public class PurchaseController {
 
         cartItemRepository.deleteAll(cartItems);
 
-        return "redirect:/api/gladwin/cod-success";
+        // 🚀 CHANGE IT TO THIS:
+        return "redirect:/orders/" + order.getId();
     }
 }

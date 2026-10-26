@@ -260,7 +260,6 @@
         }
     </style>
 </head>
-
 <body>
 
 <div class="container">
@@ -337,14 +336,14 @@
 
             </div>
 
-            <div class="tracking-message">
+            <div class="tracking-message" id="trackingStatusMessage">
                 Current status:
-                <strong th:text="${order.orderStatus}">PLACED</strong>
+                <strong id="trackingStatusValue"
+                        th:text="${order.orderStatus}">PLACED</strong>
             </div>
 
-        </div>
 
-        <!-- Special message for delivered orders -->
+            <!-- Special message for delivered orders -->
         <div class="tracking-message"
              th:if="${order.orderStatus != null
                      and order.orderStatus.toUpperCase() == 'DELIVERED'}">
@@ -403,8 +402,10 @@
 
             <div>
                 <div class="label">Order Status</div>
-                <div class="value" th:text="${order.orderStatus}"></div>
+                <div class="value" id="orderStatusValue"
+                     th:text="${order.orderStatus}">PLACED</div>
             </div>
+
 
             <div>
                 <div class="label">Payment Method</div>
@@ -521,9 +522,137 @@
             Continue Shopping
         </a>
 
+      </div>
     </div>
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function () {
 
-</div>
+            const currentOrderId = /*[[${order.id}]]*/ 0;
+
+            const orderStatusValue = document.getElementById("orderStatusValue");
+            const trackingStatusValue = document.getElementById("trackingStatusValue");
+            const trackingStatusMessage = document.getElementById("trackingStatusMessage");
+
+            if (!window.EventSource) {
+                console.warn("Your browser does not support Server-Sent Events.");
+                return;
+            }
+
+            const eventSource = new EventSource("/orders/events");
+
+            eventSource.addEventListener("order-status", function (event) {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    // Update only the order currently open on this page.
+                    if (String(data.orderId) !== String(currentOrderId)) {
+                        return;
+                    }
+
+                    const status = String(data.status || "").toUpperCase();
+
+                    // 1. Update text displays
+                    if (orderStatusValue) {
+                        orderStatusValue.textContent = status;
+                    }
+
+                    if (trackingStatusValue) {
+                        trackingStatusValue.textContent = status;
+                    }
+
+                    // 2. Update Progress Bar and Timeline Steps dynamically
+                    const progressBar = document.querySelector(".tracking-progress");
+                    const steps = document.querySelectorAll(".tracking-step");
+                    const trackingCard = trackingStatusMessage ? trackingStatusMessage.closest(".card") : document.querySelector(".card");
+
+                    // Reset steps
+                    steps.forEach(step => {
+                        step.classList.remove("completed", "current");
+                    });
+
+                    if (status === "PLACED") {
+                        if (progressBar) progressBar.style.width = "0%";
+                        if (steps[0]) steps[0].classList.add("completed");
+                        if (steps[1]) { steps[1].querySelector(".tracking-icon").textContent = "2"; }
+                        if (steps[2]) { steps[2].querySelector(".tracking-icon").textContent = "3"; }
+                        if (steps[3]) { steps[3].querySelector(".tracking-icon").textContent = "4"; }
+                    }
+                    else if (status === "PROCESSING") {
+                        if (progressBar) progressBar.style.width = "25%";
+                        if (steps[0]) steps[0].classList.add("completed");
+                        if (steps[1]) {
+                            steps[1].classList.add("completed", "current");
+                            steps[1].querySelector(".tracking-icon").textContent = "✓";
+                        }
+                    }
+                    else if (status === "SHIPPED") {
+                        if (progressBar) progressBar.style.width = "50%";
+                        if (steps[0]) steps[0].classList.add("completed");
+                        if (steps[1]) {
+                            steps[1].classList.add("completed");
+                            steps[1].querySelector(".tracking-icon").textContent = "✓";
+                        }
+                        if (steps[2]) {
+                            steps[2].classList.add("completed", "current");
+                            steps[2].querySelector(".tracking-icon").textContent = "✓";
+                        }
+                    }
+                    else if (status === "DELIVERED") {
+                        if (progressBar) progressBar.style.width = "100%";
+                        steps.forEach(step => {
+                            step.classList.add("completed");
+                            const icon = step.querySelector(".tracking-icon");
+                            if (icon) icon.textContent = "✓";
+                        });
+
+                        // Show Delivered Notice if not already present
+                        let deliveredNotice = document.getElementById("liveDeliveredNotice");
+                        if (!deliveredNotice && trackingCard) {
+                            deliveredNotice = document.createElement("div");
+                            deliveredNotice.id = "liveDeliveredNotice";
+                            deliveredNotice.className = "tracking-message";
+                            deliveredNotice.textContent = "✅ Your order has been delivered!";
+                            trackingCard.appendChild(deliveredNotice);
+                        }
+                    }
+                    else if (status === "CANCELLED") {
+                        if (trackingStatusMessage) {
+                            trackingStatusMessage.classList.add("cancelled");
+                        }
+
+                        // Show Cancellation Notice
+                        let notice = document.getElementById("liveCancellationNotice");
+                        if (!notice && trackingCard) {
+                            notice = document.createElement("div");
+                            notice.id = "liveCancellationNotice";
+                            notice.className = "tracking-message cancelled";
+                            notice.textContent = "❌ This order has been cancelled.";
+                            trackingCard.appendChild(notice);
+                        }
+
+                        // Remove the Cancel Order button instantly without refreshing.
+                        const cancelForm = document.querySelector('form[action$="/cancel"]');
+                        if (cancelForm) {
+                            cancelForm.remove();
+                        }
+                    }
+
+                } catch (error) {
+                    console.error("Could not process order status update:", error);
+                }
+            });
+
+            eventSource.onerror = function () {
+                console.warn("Order status connection interrupted. The browser will retry automatically.");
+            };
+
+            // Close the connection when leaving this page.
+            window.addEventListener("beforeunload", function () {
+                eventSource.close();
+            });
+        });
+    </script>
+
 
 </body>
 </html>

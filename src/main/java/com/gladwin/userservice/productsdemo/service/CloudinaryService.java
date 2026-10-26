@@ -41,4 +41,15 @@ public class CloudinaryService {
 
         return uploadResult.get("secure_url").toString();
     }
+    public String uploadProfileImage(MultipartFile file) throws IOException {
+
+        Map uploadResult = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder", "gladwin-product-suite/profile-images"
+                )
+        );
+
+        return uploadResult.get("secure_url").toString();
+    }
 }

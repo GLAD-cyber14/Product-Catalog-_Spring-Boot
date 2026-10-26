@@ -2,6 +2,7 @@ package com.gladwin.userservice.productsdemo.Controller;
 
 import com.gladwin.userservice.productsdemo.Model.Order;
 import com.gladwin.userservice.productsdemo.Repository.OrderRepository;
+import com.gladwin.userservice.productsdemo.service.OrderSseService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -19,9 +20,12 @@ import java.util.List;
 public class AdminOrderController {
 
     private final OrderRepository orderRepository;
+    private final OrderSseService orderSseService; // 1. Declare SSE service
 
-    public AdminOrderController(OrderRepository orderRepository) {
+    // 2. Inject OrderSseService via constructor
+    public AdminOrderController(OrderRepository orderRepository, OrderSseService orderSseService) {
         this.orderRepository = orderRepository;
+        this.orderSseService = orderSseService;
     }
 
     // Check that the logged-in user is an admin
@@ -99,9 +103,18 @@ public class AdminOrderController {
         order.setOrderStatus(status);
         orderRepository.save(order);
 
+        // 3. 🚀 NOTIFY THE CUSTOMER VIA SSE INSTANTLY IN REAL TIME
+        if (order.getCustomer() != null) {
+            orderSseService.notifyOrderStatus(
+                    order.getCustomer().getId(),
+                    order.getId(),
+                    order.getOrderStatus()
+            );
+        }
 
         return "redirect:/admin/orders";
     }
+
     // Mark a COD order as paid after receiving cash
     @PostMapping("/admin/orders/mark-paid")
     public String markOrderAsPaid(

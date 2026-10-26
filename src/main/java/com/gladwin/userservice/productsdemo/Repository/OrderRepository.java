@@ -13,4 +13,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Find orders associated with a Stripe Checkout Session.
     java.util.Optional<Order> findByStripeSessionId(String stripeSessionId);
+
+
 }

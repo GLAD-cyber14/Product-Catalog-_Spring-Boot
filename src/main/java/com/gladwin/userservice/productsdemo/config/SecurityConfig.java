@@ -18,13 +18,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/products", "/login", "/register", "/css/**", "/js/**", "/images/**","/uploads/**").permitAll()
-                        .requestMatchers("/add-product/**", "/edit-product/**", "/delete-product/**", "/save-product/**","/admin/purchases/**","/admin/users/**").hasRole("ADMIN")
+                        // Added public access for SSE order events stream
+                        .requestMatchers("/", "/products", "/login", "/register", "/css/**", "/js/**", "/images/**", "/uploads/**", "/orders/events/**", "/api/orders/events/**").permitAll()
+                        .requestMatchers("/add-product/**", "/edit-product/**", "/delete-product/**", "/save-product/**", "/admin/purchases/**", "/admin/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/",true)
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -34,6 +35,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();

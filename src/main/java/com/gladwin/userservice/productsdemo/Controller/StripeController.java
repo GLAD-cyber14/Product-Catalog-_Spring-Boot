@@ -5,14 +5,13 @@ import com.gladwin.userservice.productsdemo.Model.CartItem;
 import com.gladwin.userservice.productsdemo.Model.Order;
 import com.gladwin.userservice.productsdemo.Model.OrderItem;
 import com.gladwin.userservice.productsdemo.Model.Product;
-import com.gladwin.userservice.productsdemo.Model.Purchase;
 
 import com.gladwin.userservice.productsdemo.Repository.AppUserRepository;
 import com.gladwin.userservice.productsdemo.Repository.CartItemRepository;
-import com.gladwin.userservice.productsdemo.Repository.OrderItemRepository;
 import com.gladwin.userservice.productsdemo.Repository.OrderRepository;
+import com.gladwin.userservice.productsdemo.Repository.OrderItemRepository;
 import com.gladwin.userservice.productsdemo.Repository.ProductRepository;
-import com.gladwin.userservice.productsdemo.Repository.PurchaseRepository;
+
 import com.gladwin.userservice.productsdemo.service.StripeCheckoutService;
 
 import com.stripe.exception.StripeException;
@@ -42,7 +41,6 @@ public class StripeController {
     private final StripeCheckoutService stripeCheckoutService;
     private final CartItemRepository cartItemRepository;
     private final AppUserRepository appUserRepository;
-    private final PurchaseRepository purchaseRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
@@ -51,7 +49,6 @@ public class StripeController {
             StripeCheckoutService stripeCheckoutService,
             CartItemRepository cartItemRepository,
             AppUserRepository appUserRepository,
-            PurchaseRepository purchaseRepository,
             ProductRepository productRepository,
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository) {
@@ -59,7 +56,6 @@ public class StripeController {
         this.stripeCheckoutService = stripeCheckoutService;
         this.cartItemRepository = cartItemRepository;
         this.appUserRepository = appUserRepository;
-        this.purchaseRepository = purchaseRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -72,19 +68,13 @@ public class StripeController {
         AppUser user = appUserRepository
                 .findByUsername(authentication.getName())
                 .orElseThrow(() ->
-                        new RuntimeException("Logged-in user not found"));
+                        new IllegalStateException("User not found"));
 
-        List<CartItem> cartItems = cartItemRepository.findByUser(user);
+        List<CartItem> cartItems =
+                cartItemRepository.findByUser(user);
 
         if (cartItems.isEmpty()) {
             return "redirect:/cart";
-        }
-
-        for (CartItem item : cartItems) {
-            if (item.getQuantity() <= 0 ||
-                    item.getQuantity() > item.getProduct().getStock()) {
-                return "redirect:/cart?payment=stock_error";
-            }
         }
 
         String checkoutUrl =
@@ -101,82 +91,96 @@ public class StripeController {
     @GetMapping("/success")
     @Transactional
     public String success(
-            Authentication authentication,
-            @RequestParam("session_id") String sessionId)
+            @RequestParam("session_id") String sessionId,
+            Authentication authentication)
             throws StripeException {
 
         AppUser user = appUserRepository
                 .findByUsername(authentication.getName())
                 .orElseThrow(() ->
-                        new RuntimeException("Logged-in user not found"));
+                        new IllegalStateException("User not found"));
 
-// Retrieve the actual session from Stripe.
+        // Prevent processing the same Stripe session twice.
+        Order existingOrder =
+                orderRepository.findByStripeSessionId(sessionId)
+                        .orElse(null);
+
+        if (existingOrder != null) {
+            if (!existingOrder.getCustomer().getId()
+                    .equals(user.getId())) {
+                return "redirect:/cart?payment=verification_failed";
+            }
+
+            return "redirect:/orders/" + existingOrder.getId();
+        }
+
+        // Verify the session directly with Stripe.
         Session session =
                 stripeCheckoutService.verifyCheckoutSession(sessionId);
 
-// Confirm that Stripe has received the payment.
-        if (!"paid".equals(session.getPaymentStatus())) {
-            return "redirect:/cart?payment=not_paid";
+        if (!"paid".equalsIgnoreCase(session.getPaymentStatus())
+                || session.getClientReferenceId() == null
+                || !session.getClientReferenceId()
+                .equals(user.getId().toString())) {
+
+            return "redirect:/cart?payment=verification_failed";
         }
 
-// Confirm that the session belongs to this customer.
-        if (session.getClientReferenceId() == null ||
-                !user.getId().toString().equals(session.getClientReferenceId())) {
-            return "redirect:/cart?payment=invalid_session";
-        }
+        List<CartItem> cartItems =
+                cartItemRepository.findByUser(user);
 
-// Do not process the same Stripe session twice.
-        if (orderRepository.existsByStripeSessionId(sessionId)) {
+        if (cartItems.isEmpty()) {
             return "redirect:/orders";
         }
 
-        List<CartItem> cartItems = cartItemRepository.findByUser(user);
-
-        if (cartItems.isEmpty()) {
-            return "redirect:/cart";
-        }
-
-// Validate stock.
+        // Check all stock before changing anything.
         for (CartItem item : cartItems) {
-            if (item.getQuantity() <= 0 ||
-                    item.getQuantity() > item.getProduct().getStock()) {
+            Product product = item.getProduct();
+
+            if (item.getQuantity() <= 0
+                    || item.getQuantity() > product.getStock()) {
                 return "redirect:/cart?payment=stock_error";
             }
         }
 
-// Calculate the expected order total.
-        double total = 0;
+        // Verify that the cart total matches the Stripe payment.
+        long cartTotalInPaise = 0;
 
         for (CartItem item : cartItems) {
-            total += item.getProduct().getPrice() * item.getQuantity();
+            cartTotalInPaise += Math.round(
+                    item.getProduct().getPrice()
+                            * 100 * item.getQuantity()
+            );
         }
 
-        long expectedAmount = Math.round(total * 100);
-
-// Compare the expected total with the amount Stripe received.
-        if (session.getAmountTotal() == null ||
-                session.getAmountTotal().longValue() != expectedAmount) {
-            return "redirect:/cart?payment=amount_mismatch";
+        if (session.getAmountTotal() == null
+                || session.getAmountTotal() != cartTotalInPaise) {
+            return "redirect:/cart?payment=verification_failed";
         }
+
 
 // Create the order.
         Order order = new Order();
+
         order.setCustomer(user);
-        order.setTotalAmount(total);
+        order.setTotalAmount(cartTotalInPaise / 100.0);
         order.setPaymentMethod("STRIPE");
         order.setPaymentStatus("PAID");
-        order.setStripeSessionId(sessionId);
         order.setOrderStatus("PLACED");
+        order.setOrderDate(LocalDateTime.now());
+        order.setStripeSessionId(sessionId);
+
+// Copy the saved shipping address from the user.
         order.setPhoneNumber(user.getPhoneNumber());
         order.setAddressLine(user.getAddressLine());
         order.setCity(user.getCity());
         order.setState(user.getState());
         order.setPostalCode(user.getPostalCode());
-        order.setOrderDate(LocalDateTime.now());
 
-        orderRepository.save(order);
 
-// Save order items and update inventory.
+        order = orderRepository.save(order);
+
+        // Create order items and update stock.
         for (CartItem item : cartItems) {
             Product product = item.getProduct();
 
@@ -185,26 +189,24 @@ public class StripeController {
             orderItem.setProduct(product);
             orderItem.setQuantity(item.getQuantity());
             orderItem.setPrice(product.getPrice());
+
             orderItemRepository.save(orderItem);
 
-            Purchase purchase = new Purchase();
-            purchase.setCustomer(user);
-            purchase.setProduct(product);
-            purchase.setQuantity(item.getQuantity());
-            purchase.setTotalPrice(
-                    product.getPrice() * item.getQuantity());
-            purchase.setPurchaseDate(LocalDateTime.now());
-            purchaseRepository.save(purchase);
+            product.setStock(
+                    product.getStock() - item.getQuantity()
+            );
 
-            product.setStock(product.getStock() - item.getQuantity());
             productRepository.save(product);
         }
 
+        // Clear the cart only after the order has been saved.
         cartItemRepository.deleteAll(cartItems);
 
-        return "redirect:/cod-success";
-
-
+        return "redirect:/orders/" + order.getId();
     }
 
+    @GetMapping("/cancel")
+    public String cancel() {
+        return "redirect:/cart?payment=cancelled";
+    }
 }
