@@ -20,7 +20,7 @@ A robust, full-stack E-Commerce and Order Lifecycle Management application built
 - **Backend:** Java 21, Spring Boot 3, Spring Data JPA, Spring Security
 - **Frontend:** HTML5, CSS3, JavaScript (ES6+), Thymeleaf
 - **Database:** MySQL 
-- **Third-Party Services:** Stripe API (Payment Processing), Cloudinary (Image Hosting)
+- **Third-Party Services:** Stripe API (Payment Processing), Cloudinary (Image Hosting), Redis (Caching)
 
 ---
 
