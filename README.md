@@ -17,9 +17,9 @@ A robust, full-stack E-Commerce and Order Lifecycle Management application built
 
 ## 🛠️ Tech Stack
 
-- **Backend:** Java 17+, Spring Boot 3, Spring Data JPA, Spring Security, Spring Mail
+- **Backend:** Java 21, Spring Boot 3, Spring Data JPA, Spring Security
 - **Frontend:** HTML5, CSS3, JavaScript (ES6+), Thymeleaf
-- **Database:** PostgreSQL / MySQL / H2
+- **Database:** MySQL 
 - **Third-Party Services:** Stripe API (Payment Processing), Cloudinary (Image Hosting)
 
 ---
@@ -28,9 +28,9 @@ A robust, full-stack E-Commerce and Order Lifecycle Management application built
 
 ### Prerequisites
 
-- Java Development Kit (JDK) 17 or higher
+- Java Development Kit (JDK) 21 or higher
 - Apache Maven 3.8+
-- MySQL / PostgreSQL database (or H2 in-memory for testing)
+- MySQL 
 
 ### Configuration
 
