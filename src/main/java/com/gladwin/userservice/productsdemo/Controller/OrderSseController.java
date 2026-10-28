@@ -37,7 +37,7 @@ public class OrderSseController {
                 && authentication.isAuthenticated()
                 && !"anonymousUser".equals(authentication.getPrincipal())) {
 
-            AppUser user = appUserRepository.findByUsername(authentication.getName()).orElse(null);
+            AppUser user = appUserRepository.findByUsername(authentication.getName());
             if (user != null) {
                 userId = user.getId();
             }

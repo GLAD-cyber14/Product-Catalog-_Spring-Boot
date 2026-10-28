@@ -33,7 +33,7 @@ public class AuthController {
     public String registerUser(@ModelAttribute AppUser appUser, Model model) {
 
 // Check whether the username already exists
-        if (appUserRepository.findByUsername(appUser.getUsername()).isPresent()) {
+        if (appUserRepository.findByUsername(appUser.getUsername())!=null) {
             model.addAttribute("error",
                     "Username already exists. Please choose another username.");
             return "register";

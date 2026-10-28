@@ -47,6 +47,37 @@
             border-radius: 6px;
         }
 
+        /* Filter Bar */
+        .filter-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            color: #374151;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
         .order-card {
             background: white;
             padding: 22px;
@@ -118,7 +149,6 @@
             border-radius: 6px;
         }
 
-        /* View Details button */
         .view-details {
             display: inline-block;
             margin-top: 20px;
@@ -135,11 +165,41 @@
             background: #1746a2;
         }
 
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 30px;
+            align-items: center;
+        }
+
+        .page-link {
+            padding: 8px 14px;
+            border-radius: 6px;
+            background: white;
+            color: #2563eb;
+            border: 1px solid #d1d5db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .page-link.disabled {
+            color: #9ca3af;
+            pointer-events: none;
+            background: #f3f4f6;
+        }
+
+        .page-link.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 18px 10px;
             }
-
             .order-card {
                 padding: 16px;
             }
@@ -156,10 +216,34 @@
         <a class="back-link" th:href="@{/}">Back to Home</a>
     </div>
 
+    <!-- Filter Criteria Bar -->
+    <div class="filter-bar">
+        <span style="font-weight: bold; margin-right: 5px;">Filter:</span>
+        <a th:href="@{/orders(filter='recent10', size=10)}"
+           class="filter-btn"
+           th:classappend="${currentFilter == 'recent10' ? 'active' : ''}">Recent 10 Orders</a>
+
+        <a th:href="@{/orders(filter='week', size=10)}"
+           class="filter-btn"
+           th:classappend="${currentFilter == 'week' ? 'active' : ''}">Last Week</a>
+
+        <a th:href="@{/orders(filter='month', size=10)}"
+           class="filter-btn"
+           th:classappend="${currentFilter == 'month' ? 'active' : ''}">Last Month</a>
+
+        <a th:href="@{/orders(filter='year', size=10)}"
+           class="filter-btn"
+           th:classappend="${currentFilter == 'year' ? 'active' : ''}">This Year</a>
+
+        <a th:href="@{/orders(filter='all', size=10)}"
+           class="filter-btn"
+           th:classappend="${currentFilter == 'all' ? 'active' : ''}">All Orders</a>
+    </div>
+
     <!-- Display this when the customer has no orders -->
     <div class="empty" th:if="${#lists.isEmpty(orders)}">
-        <h2>No orders yet</h2>
-        <p>Your orders will appear here after you complete checkout.</p>
+        <h2>No orders found</h2>
+        <p>No orders match your selected criteria.</p>
         <a class="shop-link" th:href="@{/products}">Start Shopping</a>
     </div>
 
@@ -207,7 +291,6 @@
 
         </div>
 
-        <!-- NEW: View Details button -->
         <a class="view-details"
            th:href="@{/orders/{id}(id=${order.id})}">
             View Details →
@@ -215,8 +298,27 @@
 
     </div>
 
+    <!-- Pagination Controls -->
+    <div class="pagination" th:if="${totalPages > 1}">
+        <a class="page-link"
+           th:classappend="${currentPage == 0 ? 'disabled' : ''}"
+           th:href="@{/orders(page=${currentPage - 1}, filter=${currentFilter})}">
+            ← Previous
+        </a>
+
+        <span style="font-weight: bold; padding: 0 10px;"
+              th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">
+        </span>
+
+        <a class="page-link"
+           th:classappend="${currentPage + 1 >= totalPages ? 'disabled' : ''}"
+           th:href="@{/orders(page=${currentPage + 1}, filter=${currentFilter})}">
+            Next →
+        </a>
+    </div>
+
 </div>
-<!-- ADD THIS LINE TO INCLUDE THE GLOBAL LOADING SCRIPT -->
+
 <div th:insert="~{layout :: scripts}"></div>
 </body>
 </html>

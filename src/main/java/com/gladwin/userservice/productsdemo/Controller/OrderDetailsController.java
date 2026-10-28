@@ -81,11 +81,10 @@ public class OrderDetailsController {
             Authentication authentication,
             Model model) {
 
-        AppUser user = appUserRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND));
-
+        AppUser user = appUserRepository.findByUsername(authentication.getName());
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(authority ->
                         authority.getAuthority().equals("ROLE_ADMIN"));
@@ -122,11 +121,10 @@ public class OrderDetailsController {
             Authentication authentication) {
 
         // Find the logged-in user
-        AppUser user = appUserRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND));
-
+        AppUser user = appUserRepository.findByUsername(authentication.getName());
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         // Find the order
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() ->
@@ -165,10 +163,10 @@ public class OrderDetailsController {
             @PathVariable Long orderId,
             Authentication authentication) {
 
-        AppUser user = appUserRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND));
+        AppUser user = appUserRepository.findByUsername(authentication.getName());
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
 
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(authority ->

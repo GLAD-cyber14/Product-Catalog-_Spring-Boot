@@ -57,10 +57,11 @@ public class PurchaseController {
 
         String username = authentication.getName();
 
-        AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException("Logged-in user not found"));
+        AppUser user = appUserRepository.findByUsername(username); // assuming it returns AppUser directly
 
+        if (user == null) {
+            throw new RuntimeException("Logged-in user not found");
+        }
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
 
         if (cartItems.isEmpty()) {

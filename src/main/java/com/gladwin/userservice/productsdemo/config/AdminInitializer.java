@@ -21,7 +21,7 @@ public class AdminInitializer {
     public CommandLineRunner createDefaultAdmin(AppUserRepository appUserRepository,
                                                 PasswordEncoder passwordEncoder) {
         return args -> {
-            if (appUserRepository.findByUsername(adminUsername).isEmpty()) {
+            if (appUserRepository.findByUsername(adminUsername) == null) {
                 AppUser admin = new AppUser();
                 admin.setUsername(adminUsername);
                 admin.setPassword(passwordEncoder.encode(adminPassword));

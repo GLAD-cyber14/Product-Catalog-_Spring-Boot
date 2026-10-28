@@ -166,11 +166,12 @@ public class CartController {
 
     // Find the currently logged-in user
     private AppUser getLoggedInUser(Authentication authentication) {
-
         String username = authentication.getName();
+        AppUser user = appUserRepository.findByUsername(username); // assuming it returns AppUser directly
 
-        return appUserRepository.findByUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException("Logged-in user not found"));
+        if (user == null) {
+            throw new RuntimeException("Logged-in user not found");
+        }
+        return user;
     }
 }

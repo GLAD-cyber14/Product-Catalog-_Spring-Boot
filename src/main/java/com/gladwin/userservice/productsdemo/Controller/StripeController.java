@@ -65,10 +65,10 @@ public class StripeController {
     public String checkout(Authentication authentication)
             throws StripeException {
 
-        AppUser user = appUserRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() ->
-                        new IllegalStateException("User not found"));
+        AppUser user = appUserRepository.findByUsername(authentication.getName());
+        if (user == null) {
+            throw new IllegalStateException("User not found");
+        }
 
         List<CartItem> cartItems =
                 cartItemRepository.findByUser(user);
@@ -95,10 +95,10 @@ public class StripeController {
             Authentication authentication)
             throws StripeException {
 
-        AppUser user = appUserRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() ->
-                        new IllegalStateException("User not found"));
+        AppUser user = appUserRepository.findByUsername(authentication.getName());
+        if (user == null) {
+            throw new IllegalStateException("User not found");
+        }
 
         // Prevent processing the same Stripe session twice.
         Order existingOrder =

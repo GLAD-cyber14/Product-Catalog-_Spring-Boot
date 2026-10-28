@@ -67,10 +67,11 @@ public class CheckoutController {
 
         String username = authentication.getName();
 
-        return appUserRepository.findByUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Logged-in user not found"));
+        AppUser user = appUserRepository.findByUsername(username);
+        if (user == null) {
+            throw new RuntimeException("Logged-in user not found");
+        }
+        return user;
     }
     @PostMapping("/save-address")
     public String saveAddress(

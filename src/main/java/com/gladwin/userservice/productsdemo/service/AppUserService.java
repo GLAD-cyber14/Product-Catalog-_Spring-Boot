@@ -16,14 +16,15 @@ public class AppUserService implements UserDetailsService {
     public AppUserService(AppUserRepository appUserRepository) {
         this.appUserRepository = appUserRepository;
     }
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
         System.out.println("LOGIN USERNAME: " + username);
 
-        AppUser appUser = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        AppUser appUser = appUserRepository.findByUsername(username);
+        if (appUser == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
 
         System.out.println("USER FOUND: " + appUser.getUsername());
         System.out.println("PASSWORD HASH: " + appUser.getPassword());

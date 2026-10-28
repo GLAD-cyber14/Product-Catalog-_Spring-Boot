@@ -36,10 +36,10 @@ public class ProfileController {
             Authentication authentication,
             Model model) {
 
-        AppUser user = appUserRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        AppUser user = appUserRepository.findByUsername(authentication.getName());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
 
         model.addAttribute("user", user);
 
@@ -67,10 +67,10 @@ public class ProfileController {
             RedirectAttributes redirectAttributes)
             throws IOException {
 
-        AppUser user = appUserRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        AppUser user = appUserRepository.findByUsername(authentication.getName());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
 
         user.setEmail(email);
         user.setFirstName(firstName);

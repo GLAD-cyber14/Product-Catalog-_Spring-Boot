@@ -1,18 +1,21 @@
 package com.gladwin.userservice.productsdemo.Repository;
 
 import com.gladwin.userservice.productsdemo.Model.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    List<Order> findByCustomerIdOrderByOrderDateDesc(Long customerId);
+    // Paginated query for all customer orders
+    Page<Order> findByCustomerIdOrderByOrderDateDesc(Long customerId, Pageable pageable);
+
+    // Paginated query filtered by date after a specific timestamp
+    Page<Order> findByCustomerIdAndOrderDateAfterOrderByOrderDateDesc(Long customerId, LocalDateTime startDate, Pageable pageable);
 
     boolean existsByStripeSessionId(String stripeSessionId);
 
-    // Find orders associated with a Stripe Checkout Session.
     java.util.Optional<Order> findByStripeSessionId(String stripeSessionId);
-
-
 }
