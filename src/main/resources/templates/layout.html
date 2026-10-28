@@ -156,7 +156,7 @@
     <!-- Bootstrap JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Universal Circular Loading Overlay Script (Links + Forms + All Buttons) -->
+    <!-- Universal Catch-All Loading Overlay Script -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // 1. Auto-inject the loading modal overlay if missing
@@ -205,7 +205,7 @@
                         z-index: 2147483647 !important;
                         opacity: 0 !important;
                         pointer-events: none !important;
-                        transition: opacity 0.25s ease-in-out !important;
+                        transition: opacity 0.2s ease-in-out !important;
                     }
 
                     #circular-loading-overlay.active {
@@ -279,37 +279,40 @@
                 loadingOverlay.classList.remove("active");
             }
 
-            // 1. Trigger when clicking internal navigation links
+            // Catch ALL clicks across the document
             document.addEventListener("click", function (e) {
-                const link = e.target.closest("a");
-                if (link && link.href &&
-                    link.getAttribute("href") !== "#" &&
-                    !link.getAttribute("href").startsWith("javascript") &&
-                    link.target !== "_blank" &&
-                    link.hostname === window.location.hostname) {
-                    startLoading();
+                // Check if user clicked an anchor link or a button (or inside one)
+                const clickable = e.target.closest("a, button, input[type='submit'], input[type='button']");
+                if (!clickable) return;
+
+                // Ignore dummy links or empty hashes
+                if (clickable.tagName === "A") {
+                    const href = clickable.getAttribute("href");
+                    if (!href || href === "#" || href.startsWith("javascript") || clickable.target === "_blank") {
+                        return;
+                    }
+                    if (clickable.hostname && clickable.hostname !== window.location.hostname) {
+                        return; // Ignore external links
+                    }
+                }
+
+                // Ignore Bootstrap dropdown / modal UI toggles that don't reload or fetch page data
+                if (clickable.hasAttribute("data-bs-toggle") ||
+                    clickable.getAttribute("data-bs-dismiss") === "modal" ||
+                    clickable.classList.contains("navbar-toggler")) {
                     return;
                 }
 
-                // 2. Trigger when clicking interactive buttons (excluding modal/dropdown UI toggles)
-                const button = e.target.closest("button");
-                if (button) {
-                    // Ignore UI-only toggles that don't fetch server data
-                    const isToggle = button.hasAttribute("data-bs-toggle") ||
-                        button.getAttribute("data-bs-dismiss") === "modal" ||
-                        button.classList.contains("navbar-toggler");
-                    if (!isToggle) {
-                        startLoading();
-                    }
-                }
+                // Trigger loading overlay for everything else!
+                startLoading();
             });
 
-            // 3. Trigger on form submissions
+            // Catch ALL form submissions universally
             document.addEventListener("submit", function (e) {
                 startLoading();
             });
 
-            // 4. Hide overlay when page rendering/display completes
+            // Automatically hide overlay when the page finishes rendering/navigating back
             window.addEventListener("pageshow", function () {
                 stopLoading();
             });
