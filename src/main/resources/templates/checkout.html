@@ -259,11 +259,15 @@
                             </label>
 
                         </div>
-                        <button type="button" id="changePaymentBtn" class="btn btn-outline-primary btn-sm">
+
+                        <!-- Added type="button" and class no-loader to bypass global loader hooks -->
+                        <button type="button"
+                                id="changePaymentBtn"
+                                class="btn btn-outline-primary btn-sm no-loader">
                             Change Payment Method
                         </button>
 
-                        <small class="text-muted ms-4">
+                        <small class="text-muted ms-4 d-block mt-2">
                             Pay securely using your debit or credit card.
                         </small>
 
@@ -273,7 +277,6 @@
                             Pay with Card
                         </a>
                     </div>
-
 
                     <hr>
 
@@ -313,71 +316,56 @@
     const cardOrderBtn = document.getElementById('cardOrderBtn');
 
     function updatePaymentOptions() {
-
         if (cashPayment.checked) {
+            cardPayment.checked = false;
 
-            // Enable COD and disable Card
-            cashPayment.disabled = false;
-            cardPayment.disabled = true;
-
-            // COD button bright and enabled
             cashOrderBtn.disabled = false;
             cashOrderBtn.style.opacity = '1';
             cashOrderBtn.style.cursor = 'pointer';
+            cashOrderBtn.style.pointerEvents = 'auto';
 
-            // Card button dim and disabled
             cardOrderBtn.style.opacity = '0.5';
             cardOrderBtn.style.pointerEvents = 'none';
             cardOrderBtn.style.cursor = 'not-allowed';
 
         } else if (cardPayment.checked) {
-
-            // Disable COD and enable Card
             cashPayment.checked = false;
-            cashPayment.disabled = true;
-            cardPayment.disabled = false;
 
-            // COD button dim and disabled
             cashOrderBtn.disabled = true;
             cashOrderBtn.style.opacity = '0.5';
+            cashOrderBtn.style.pointerEvents = 'none';
             cashOrderBtn.style.cursor = 'not-allowed';
 
-            // Card button bright and enabled
             cardOrderBtn.style.opacity = '1';
             cardOrderBtn.style.pointerEvents = 'auto';
             cardOrderBtn.style.cursor = 'pointer';
         }
     }
 
-    changePaymentBtn.addEventListener('click', function () {
+    changePaymentBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation(); // Stops global layout listeners from catching the click
 
         if (cashPayment.checked) {
-
-            // Switch from COD to Card
             cashPayment.checked = false;
-            cashPayment.disabled = true;
-
-            cardPayment.disabled = false;
             cardPayment.checked = true;
-
         } else {
-
-            // Switch from Card to COD
             cardPayment.checked = false;
-            cardPayment.disabled = true;
-
-            cashPayment.disabled = false;
             cashPayment.checked = true;
         }
 
         updatePaymentOptions();
     });
 
-    // Set the initial payment state
+    cashPayment.addEventListener('change', updatePaymentOptions);
+    cardPayment.addEventListener('change', updatePaymentOptions);
+
     updatePaymentOptions();
 </script>
 
-<!-- Bootstrap JS -->
+<!-- Bootstrap JS
 <div th:replace="~{layout :: scripts}"></div>
+-->
+<div th:insert="~{layout :: scripts}"></div>
 </body>
 </html>
