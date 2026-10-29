@@ -290,8 +290,8 @@ public class OrderDetailsController {
                                 order.getTotalAmount(),
                                 "REFUNDED".equalsIgnoreCase(order.getPaymentStatus())
                         );
-                    } catch (RuntimeException ex) {
-                        // An email failure must not trigger another refund.
+                    } catch (Exception ex) { // <-- Catch general Exception instead of RuntimeException
+                        // An email failure must not break the cancellation flow.
                         System.err.println(
                                 "Refund email could not be sent for order "
                                         + orderId + ": " + ex.getMessage()
