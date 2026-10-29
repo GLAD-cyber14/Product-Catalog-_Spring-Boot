@@ -1,4 +1,4 @@
- package com.gladwin.userservice.productsdemo.service;
+package com.gladwin.userservice.productsdemo.service;
 
 import com.gladwin.userservice.productsdemo.Model.Order;
 import com.gladwin.userservice.productsdemo.Model.OrderItem;
@@ -30,26 +30,30 @@ public class OrderCancellationService {
     @Transactional
     public void cancelOrderAndRestoreStock(
             Long orderId, String paymentStatus, String stripeRefundId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalStateException("Order not found."));
 
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalStateException("Order not found with ID: " + orderId));
+
+        // Idempotent check
         if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus())) {
             return;
         }
 
+        // Validate allowed states
         if (!"PLACED".equalsIgnoreCase(order.getOrderStatus())
                 && !"PROCESSING".equalsIgnoreCase(order.getOrderStatus())) {
-            throw new IllegalStateException("This order cannot be cancelled.");
+            throw new IllegalStateException("Order status '" + order.getOrderStatus() + "' cannot be cancelled.");
         }
 
+        // Restore inventory stock
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
-
         for (OrderItem item : orderItems) {
             Product product = item.getProduct();
             product.setStock(product.getStock() + item.getQuantity());
             productRepository.save(product);
         }
 
+        // Update order status and payment details
         order.setOrderStatus("CANCELLED");
 
         if (paymentStatus != null) {
@@ -61,8 +65,6 @@ public class OrderCancellationService {
 
         orderRepository.save(order);
 
+        // TODO: Trigger async email notification if needed
     }
-
-
 }
-
