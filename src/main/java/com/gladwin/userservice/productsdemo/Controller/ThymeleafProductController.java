@@ -303,7 +303,7 @@ public class ThymeleafProductController {
 
                 filteredProducts.sort(
                         (a, b) ->
-                                Integer.compare(
+                                Long.compare(
                                         a.getId(),
                                         b.getId())
                 );
@@ -312,7 +312,7 @@ public class ThymeleafProductController {
 
                 filteredProducts.sort(
                         (a, b) ->
-                                Integer.compare(
+                                Long.compare(
                                         b.getId(),
                                         a.getId())
                 );
@@ -635,7 +635,7 @@ public class ThymeleafProductController {
 
     @GetMapping("/edit/{id}")
     public String initiateEditMode(
-            @PathVariable("id") int id,
+            @PathVariable("id") Long id,
             Model model) {
 
         Product targetProduct = productRepository.findById(id)
@@ -661,7 +661,7 @@ public class ThymeleafProductController {
 
     @GetMapping("/delete/{id}")
     public String removeProductRow(
-            @PathVariable int id,
+            @PathVariable Long id,
             RedirectAttributes redirectAttributes) {
 
         // Check whether this product has any purchase history

@@ -35,7 +35,7 @@ public Product addProduct(@RequestBody Product product) {
         return productRepository.save(product);
     }
         @PutMapping("/{id}") // PUT: http://localhost:8080/api/gladwin/1
-        public Product updateProduct(@PathVariable int id, @RequestBody Product productDetails) {
+        public Product updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
             // 1. Find the existing product by ID, or throw an error if it doesn't exist
             Product existingProduct = productRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
@@ -51,7 +51,7 @@ public Product addProduct(@RequestBody Product product) {
     }
 
     @DeleteMapping("/{id}") // DELETE: http://localhost:8080/api/gladwin/1
-    public String deleteProduct(@PathVariable int id) {
+    public String deleteProduct(@PathVariable Long id) {
         // 1. Check if the product exists in MySQL before attempting deletion
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));

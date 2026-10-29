@@ -8,5 +8,5 @@ import java.util.List;
 public interface PurchaseRepository extends JpaRepository<Purchase, Integer> {
 
     List<Purchase> findAllByOrderByPurchaseDateDesc();
-    boolean existsByProductId(int productId);
+    boolean existsByProductId(Long productId);
 }

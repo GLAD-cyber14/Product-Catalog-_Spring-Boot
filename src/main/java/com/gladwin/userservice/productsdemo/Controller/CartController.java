@@ -53,7 +53,7 @@ public class CartController {
     // Add a product to the cart
     @PostMapping("/add/{productId}")
     public String addToCart(
-            @PathVariable int productId,
+            @PathVariable Long productId,
             Authentication authentication) {
 
         AppUser user = getLoggedInUser(authentication);

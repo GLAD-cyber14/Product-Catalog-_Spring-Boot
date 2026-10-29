@@ -81,7 +81,6 @@
     <div class="section-heading">
 
         <div>
-
             <span class="section-label">
                 TRENDING NOW
             </span>
@@ -93,15 +92,10 @@
             <p>
                 Explore some of our latest products.
             </p>
-
         </div>
 
-
-        <a href="/products"
-           class="view-all-btn">
-
+        <a href="/products" class="view-all-btn">
             View All Products →
-
         </a>
 
     </div>
@@ -109,62 +103,53 @@
 
     <div class="featured-products">
 
-        <!-- Product cards -->
+        <!-- Product cards with index-based class appending -->
         <div class="featured-product-card"
-             th:each="prod : ${allProductsList}">
+             th:each="prod, iterStat : ${allProductsList}"
+             th:classappend="${iterStat.index >= 4} ? 'extra-product d-none' : ''">
 
             <!-- IMAGE -->
             <div class="featured-image">
-
                 <img th:if="${prod.image != null and !#strings.isEmpty(prod.image)}"
                      th:src="@{${prod.image}}"
                      th:alt="${prod.name}">
-
                 <div th:unless="${prod.image != null and !#strings.isEmpty(prod.image)}"
                      class="no-product-image">
-
                     📦
-
                 </div>
-
             </div>
-
 
             <!-- PRODUCT DETAILS -->
             <div class="featured-details">
-
-                <span class="product-tag">
-                    Featured
-                </span>
-
-                <h3 th:text="${prod.name}">
-                    Product Name
-                </h3>
-
+                <span class="product-tag">Featured</span>
+                <h3 th:text="${prod.name}">Product Name</h3>
                 <div class="featured-bottom">
+                    <strong th:text="'₹' + ${#numbers.formatDecimal(prod.price, 1, 2)}">₹0.00</strong>
 
-                    <strong th:text="'₹' + ${#numbers.formatDecimal(prod.price, 1, 2)}">
-                        ₹0.00
-                    </strong>
+                    <div sec:authorize="isAuthenticated()">
+                        <form th:action="@{/cart/add/{id}(id=${prod.id})}" method="post" style="margin: 0;">
+                            <button type="submit" class="product-add-btn no-loader">+ Add</button>
+                        </form>
+                    </div>
 
-                    <a th:href="@{/products}"
-                       class="product-view-btn">
-
-                        View
-
-                    </a>
-
+                    <div sec:authorize="isAnonymous()">
+                        <a th:href="@{/products}" class="product-view-btn">View</a>
+                    </div>
                 </div>
-
             </div>
 
         </div>
 
     </div>
 
+    <!-- LOAD MORE BUTTON -->
+    <div class="load-more-container" th:if="${#lists.size(allProductsList) > 4}">
+        <button id="loadMoreBtn" type="button" class="load-more-btn no-loader" onclick="loadMoreProducts()">
+            Load More Products ↓
+        </button>
+    </div>
+
 </section>
-
-
 
 
 <!-- ================= SHOP BY CATEGORY ================= -->
@@ -299,11 +284,8 @@
             and discover your next favorite product.
         </p>
 
-        <a href="/products"
-           class="cta-button">
-
+        <a href="/products" class="cta-button">
             Explore Products →
-
         </a>
 
     </div>
@@ -349,6 +331,10 @@
         color: #182033;
     }
 
+    /* Helper utility for hiding dynamic elements */
+    .d-none {
+        display: none !important;
+    }
 
     /* ================= COMPACT HERO ================= */
 
@@ -564,273 +550,129 @@
 
     .home-search {
         width: min(650px, 100%);
-
         background: white;
-
         padding: 5px;
-
         border-radius: 18px;
-
         display: flex;
-
         align-items: center;
-
-        box-shadow:
-                0 12px 35px rgba(0,0,0,0.18);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.18);
     }
-
 
     .search-icon {
         font-size: 20px;
         margin-left: 14px;
     }
 
-
     .home-search input {
         flex: 1;
-
         border: none;
         outline: none;
-
         padding: 15px;
-
         font-size: 16px;
-
         background: transparent;
     }
 
-
     .home-search button {
         border: none;
-
         background: #4f46e5;
-
         color: white;
-
         font-weight: 700;
-
         padding: 13px 23px;
-
         border-radius: 13px;
-
         cursor: pointer;
-
         transition: 0.2s;
     }
-
 
     .home-search button:hover {
         transform: translateY(-2px);
     }
 
-
-    /* ================= QUICK CATEGORIES ================= */
-
-    .quick-categories {
-        display: flex;
-
-        flex-wrap: wrap;
-
-        gap: 10px;
-
-        margin-top: 22px;
-    }
-
-
-    .quick-categories a {
-        text-decoration: none;
-
-        color: white;
-
-        padding: 9px 15px;
-
-        border-radius: 30px;
-
-        background: rgba(255,255,255,0.10);
-
-        border: 1px solid rgba(255,255,255,0.12);
-
-        font-size: 14px;
-
-        transition: 0.2s;
-    }
-
-
-    .quick-categories a:hover {
-        background: rgba(255,255,255,0.20);
-
-        transform: translateY(-2px);
-    }
-
-
     /* ================= SECTIONS ================= */
 
     .home-section {
         width: min(1400px, calc(100% - 40px));
-
         margin: 75px auto;
     }
 
-
     .section-heading {
         display: flex;
-
         align-items: end;
-
-        /*justify-content: space-between;*/
-
         gap: 10px;
-
         margin-bottom: 18px;
     }
 
-
     .section-label {
         font-size: 12px;
-
         font-weight: 800;
-
         letter-spacing: 2px;
-
         color: #635bff;
     }
 
-
     .section-heading h2 {
         margin: 7px 0;
-
         font-size: 34px;
-
         font-weight: 800;
     }
 
-
     .section-heading p {
         margin: 0;
-
         color: #7b8497;
     }
-
 
     /* ================= CATEGORY CARDS ================= */
 
     .category-grid {
         display: grid;
-
-        grid-template-columns:
-            repeat(4, 1fr);
-
+        grid-template-columns: repeat(4, 1fr);
         gap: 20px;
     }
 
-
     .category-card {
         text-decoration: none;
-
         color: inherit;
-
         min-height: 190px;
-
         border-radius: 24px;
-
         padding: 28px;
-
         display: flex;
-
         flex-direction: column;
-
         justify-content: space-between;
-
         position: relative;
-
         overflow: hidden;
-
         border: 1px solid rgba(0,0,0,0.05);
-
-        transition:
-                transform 0.25s,
-                box-shadow 0.25s;
+        transition: transform 0.25s, box-shadow 0.25s;
     }
-
 
     .category-card:hover {
         transform: translateY(-7px);
-
-        box-shadow:
-                0 20px 40px rgba(0,0,0,0.10);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.10);
     }
 
+    .category-card.electronics { background: linear-gradient(135deg, #e9f4ff, #dbeafe); }
+    .category-card.apparel { background: linear-gradient(135deg, #fff0f6, #ffe4ef); }
+    .category-card.grocery { background: linear-gradient(135deg, #edfff3, #dcfce7); }
+    .category-card.home-category { background: linear-gradient(135deg, #fff8e8, #ffedd5); }
 
-    .category-card.electronics {
-        background: linear-gradient(
-                135deg,
-                #e9f4ff,
-                #dbeafe
-        );
-    }
-
-
-    .category-card.apparel {
-        background: linear-gradient(
-                135deg,
-                #fff0f6,
-                #ffe4ef
-        );
-    }
-
-
-    .category-card.grocery {
-        background: linear-gradient(
-                135deg,
-                #edfff3,
-                #dcfce7
-        );
-    }
-
-
-    .category-card.home-category {
-        background: linear-gradient(
-                135deg,
-                #fff8e8,
-                #ffedd5
-        );
-    }
-
-
-    .category-icon {
-        font-size: 42px;
-    }
-
+    .category-icon { font-size: 42px; }
 
     .category-card h3 {
         margin: 15px 0 5px;
-
         font-size: 22px;
-
         font-weight: 800;
     }
 
-
     .category-card p {
         margin: 0;
-
         color: #6b7280;
-
         font-size: 14px;
     }
 
-
     .category-arrow {
         position: absolute;
-
         right: 25px;
         bottom: 22px;
-
         font-size: 25px;
-
         font-weight: 700;
     }
-
 
     /* ================= FEATURED PRODUCTS ================= */
 
@@ -838,321 +680,250 @@
         margin-top: 40px;
     }
 
-
     .featured-products {
         display: grid;
-
-        grid-template-columns:
-            repeat(4, 1fr);
-
+        grid-template-columns: repeat(4, 1fr);
         gap: 20px;
     }
 
-
     .featured-product-card {
         background: white;
-
         border-radius: 22px;
-
         overflow: hidden;
-
         border: 1px solid #edf0f5;
-
-        transition:
-                transform 0.25s,
-                box-shadow 0.25s;
+        transition: transform 0.25s, box-shadow 0.25s;
     }
-
 
     .featured-product-card:hover {
         transform: translateY(-6px);
-
-        box-shadow:
-                0 18px 40px rgba(28, 35, 60, 0.10);
+        box-shadow: 0 18px 40px rgba(28, 35, 60, 0.10);
     }
 
     .featured-image {
         height: 230px;
-
         background: #f4f6fa;
-
         display: flex;
-
         align-items: center;
-
         justify-content: center;
-
         padding: 20px;
     }
-
 
     .featured-image img {
         width: 100%;
         height: 100%;
-
         object-fit: contain;
     }
-
 
     .no-product-image {
         font-size: 55px;
     }
 
-
     .featured-details {
         padding: 20px;
     }
 
-
     .product-tag {
         display: inline-block;
-
         padding: 5px 9px;
-
         border-radius: 8px;
-
         background: #eef2ff;
-
         color: #4f46e5;
-
         font-size: 11px;
-
         font-weight: 800;
-
         text-transform: uppercase;
     }
 
-
     .featured-details h3 {
         margin: 13px 0 18px;
-
         font-size: 18px;
-
         font-weight: 750;
-
         white-space: nowrap;
-
         overflow: hidden;
-
         text-overflow: ellipsis;
     }
 
-
     .featured-bottom {
         display: flex;
-
         align-items: center;
-
         justify-content: space-between;
     }
-
 
     .featured-bottom strong {
         font-size: 20px;
     }
 
-
     .product-view-btn {
         text-decoration: none;
-
         padding: 8px 14px;
-
         border-radius: 10px;
-
         background: #111936;
-
         color: white;
-
         font-size: 13px;
-
         font-weight: 700;
+        transition: 0.2s;
     }
 
+    .product-view-btn:hover {
+        background: #233162;
+    }
+
+    .product-add-btn {
+        border: none;
+        padding: 8px 16px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .product-add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
 
     .view-all-btn {
         text-decoration: none;
-
         color: #4f46e5;
-
         font-weight: 700;
     }
 
+    /* Load More Styling */
+    .load-more-container {
+        text-align: center;
+        margin-top: 35px;
+    }
+
+    .load-more-btn {
+        border: 2px solid #111936;
+        background: transparent;
+        color: #111936;
+        padding: 12px 28px;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 750;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .load-more-btn:hover {
+        background: #111936;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(17, 25, 54, 0.15);
+    }
 
     /* ================= CTA ================= */
 
     .home-cta {
         width: min(1400px, calc(100% - 40px));
-
         margin: 100px auto 60px;
-
         padding: 65px;
-
         border-radius: 30px;
-
-        background:
-                linear-gradient(
-                        135deg,
-                        #111936,
-                        #343d82
-                );
-
+        background: linear-gradient(135deg, #111936, #343d82);
         color: white;
-
         text-align: center;
     }
 
-
     .home-cta span {
         font-size: 12px;
-
         letter-spacing: 2px;
-
         font-weight: 800;
-
         opacity: 0.7;
     }
 
-
     .home-cta h2 {
         font-size: 40px;
-
         margin: 12px 0;
     }
 
-
     .home-cta p {
         color: rgba(255,255,255,0.70);
-
         max-width: 600px;
-
         margin: 0 auto 28px;
     }
 
-
     .cta-button {
         display: inline-block;
-
         padding: 13px 24px;
-
         border-radius: 13px;
-
         background: white;
-
         color: #111936;
-
         text-decoration: none;
-
         font-weight: 800;
     }
-
 
     /* ================= FOOTER ================= */
 
     .home-footer {
         width: min(1400px, calc(100% - 40px));
-
         margin: 0 auto;
-
         padding: 20px 0 30px;
-
         color: #7b8497;
     }
 
-
     .home-footer > div {
         display: flex;
-
         justify-content: space-between;
-
         gap: 10px;
-
         border-top: 1px solid #e5e7eb;
-
         padding-top: 20px;
     }
-
 
     .home-footer strong {
         color: #182033;
     }
 
-
     /* ================= RESPONSIVE ================= */
 
     @media (max-width: 1000px) {
-
         .category-grid,
         .featured-products {
-            grid-template-columns:
-                repeat(2, 1fr);
+            grid-template-columns: repeat(2, 1fr);
         }
-
         .home-hero {
             padding: 20px;
         }
-
     }
 
-
     @media (max-width: 650px) {
-
         .home-hero {
             width: calc(100% - 20px);
-
             padding: 35px 25px;
-
             min-height: 500px;
-
             border-radius: 24px;
         }
-
-
         .home-section,
         .home-cta,
         .home-footer {
             width: calc(100% - 20px);
         }
-
-
         .category-grid,
         .featured-products {
             grid-template-columns: 1fr;
         }
-
-
         .section-heading {
             align-items: start;
-
             flex-direction: column;
         }
-
-
         .home-search {
             flex-direction: row;
         }
-
-
         .home-search button {
             padding: 12px 15px;
         }
-
-
         .home-cta {
             padding: 45px 25px;
         }
-
-
         .home-cta h2 {
             font-size: 30px;
         }
-
-
         .home-footer > div {
             flex-direction: column;
         }
-
     }
-
 
     /* ================= COMPACT HERO RESPONSIVE ================= */
 
@@ -1160,7 +931,6 @@
         .home-hero {
             grid-template-columns: 1fr 1fr;
         }
-
         .hero-visual {
             display: none;
         }
@@ -1173,11 +943,9 @@
             padding: 25px;
             grid-template-columns: 1fr;
         }
-
         .hero-left h1 {
             font-size: 32px;
         }
-
         .hero-middle {
             margin-top: 5px;
         }
@@ -1186,33 +954,41 @@
 </style>
 
 
-<!-- ================= SEARCH SCRIPT ================= -->
+<!-- ================= SCRIPTS ================= -->
 <script>
 
     function searchProducts() {
-
-        const search =
-            document.getElementById("homeSearch")
-                .value
-                .trim();
-
+        const search = document.getElementById("homeSearch").value.trim();
         if (search.length > 0) {
-
-            window.location.href =
-                "/products?search=" +
-                encodeURIComponent(search);
-
+            window.location.href = "/products?search=" + encodeURIComponent(search);
         } else {
-
             window.location.href = "/products";
-
         }
-
     }
 
-</script>
-<div th:replace="~{layout :: scripts}"></div>
+        function loadMoreProducts() {
+        // Select all hidden products that have both classes
+        const hiddenProducts = document.querySelectorAll('.featured-product-card.extra-product.d-none');
+        let count = 0;
 
+        // Reveal the next 4 products
+        hiddenProducts.forEach(product => {
+        if (count < 4) {
+        product.classList.remove('d-none');
+        count++;
+    }
+    });
+
+        // Hide the "Load More" button if no hidden products remain
+        if (document.querySelectorAll('.featured-product-card.extra-product.d-none').length === 0) {
+        const btn = document.getElementById('loadMoreBtn');
+        if (btn) btn.style.display = 'none';
+    }
+    }
+</script>
+
+
+<div th:replace="~{layout :: scripts}"></div>
 
 </body>
 </html>

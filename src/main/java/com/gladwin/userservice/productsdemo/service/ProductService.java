@@ -33,7 +33,7 @@ public class ProductService {
 
     // Clear the product cache after deleting a product.
     @CacheEvict(value = "products", allEntries = true)
-    public void deleteProduct(int id) {
+    public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
 }

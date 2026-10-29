@@ -285,6 +285,11 @@
                 const clickable = e.target.closest("a, button, input[type='submit'], input[type='button']");
                 if (!clickable) return;
 
+                // IGNORE if the button or element has the 'no-loader' class
+                if (clickable.classList.contains("no-loader") || clickable.closest(".no-loader")) {
+                    return;
+                }
+
                 // Ignore dummy links or empty hashes
                 if (clickable.tagName === "A") {
                     const href = clickable.getAttribute("href");
