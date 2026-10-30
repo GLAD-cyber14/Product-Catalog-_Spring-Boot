@@ -216,6 +216,23 @@
             background: #b91c1c;
         }
 
+        /* Inline Button Spinner Styles */
+        .spinner-inline {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: btn-spin 0.6s linear infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        @keyframes btn-spin {
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 12px;
@@ -503,16 +520,17 @@
 
 
 
-        <!-- Cancel Order button: only for eligible orders -->
+        <!-- Cancel Order button with In-Button Spinner Integration -->
         <form th:if="${order.orderStatus != null
                   and (order.orderStatus.toUpperCase() == 'PLACED'
                   or order.orderStatus.toUpperCase() == 'PROCESSING')}"
               th:action="@{/orders/{orderId}/cancel(orderId=${order.id})}"
               method="post"
-              onsubmit="return confirm('Are you sure you want to cancel this order?');">
+              id="cancelOrderForm">
 
-            <button type="submit" class="btn btn-danger">
-                ✖ Cancel Order
+            <button type="button" class="btn btn-danger" id="cancelOrderBtn" onclick="handleCancelOrder(this)">
+                <span id="cancelSpinner" style="display: none;" class="spinner-inline"></span>
+                <span id="cancelBtnText">✖ Cancel Order</span>
             </button>
 
         </form>
@@ -529,6 +547,29 @@
 </div>
 
 <script th:inline="javascript">
+    // In-button cancellation handler to prevent double-clicks and show local feedback
+    function handleCancelOrder(button) {
+        if (!confirm('Are you sure you want to cancel this order?')) {
+            return;
+        }
+
+        const spinner = document.getElementById("cancelSpinner");
+        const btnText = document.getElementById("cancelBtnText");
+        const form = document.getElementById("cancelOrderForm");
+
+        // 1. Disable button to prevent spam-clicks
+        button.disabled = true;
+        button.style.opacity = "0.85";
+        button.style.cursor = "not-allowed";
+
+        // 2. Show spinner and switch button text
+        if (spinner) spinner.style.display = "inline-block";
+        if (btnText) btnText.textContent = " Cancelling...";
+
+        // 3. Submit form securely
+        form.submit();
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
 
         const currentOrderId = /*[[${order.id}]]*/ 0;
@@ -664,7 +705,5 @@
         });
     });
 </script>
-<!-- ADD THIS LINE TO INCLUDE THE GLOBAL LOADING SCRIPT -->
-<div th:insert="~{layout :: scripts}"></div>
 </body>
 </html>
