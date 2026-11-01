@@ -34,6 +34,13 @@
             width: 100%;
             opacity: 0;
         }
+
+        /* Mobile-Friendly Cart Badge Styles */
+        #cart-badge {
+            padding: 0.25em 0.5em;
+            font-weight: 700;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
@@ -66,7 +73,7 @@
         <!-- Navigation -->
         <div class="collapse navbar-collapse" id="mainNavbar">
 
-            <div class="ms-auto d-flex gap-2 align-items-center">
+            <div class="ms-auto d-flex gap-2 align-items-center flex-wrap">
 
                 <a th:href="@{/}" class="nav-item-link">Home</a>
 
@@ -79,10 +86,10 @@
                     📦 All Orders
                 </a>
 
-                <!-- Cart with Live Badge -->
-                <a th:href="@{/cart}" class="nav-item-link position-relative">
-                    🛒 Cart
-                    <span id="cart-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.65rem;">
+                <!-- Cart with Inline Mobile-Friendly Badge -->
+                <a th:href="@{/cart}" class="nav-item-link d-inline-flex align-items-center gap-2">
+                    <span>🛒 Cart</span>
+                    <span id="cart-badge" class="badge rounded-pill bg-danger" style="display: none; font-size: 0.65rem;">
                         0
                     </span>
                 </a>

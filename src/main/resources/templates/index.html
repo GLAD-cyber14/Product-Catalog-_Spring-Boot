@@ -507,13 +507,6 @@
 
 
                     <!-- =================================================
-                         OUT OF STOCK PRODUCTS
-                    ================================================= -->
-
-
-
-
-                    <!-- =================================================
       AVAILABLE PRODUCTS
  ================================================= -->
 
@@ -971,31 +964,19 @@
     ========================================================= -->
 
     <script>
-        let totalCartItems = 0;
-
-        function updateCartBadge() {
-            const badge = document.getElementById("cart-badge");
-            if (!badge) return;
-
-            if (totalCartItems > 0) {
-                badge.style.display = "inline-block";
-                badge.textContent = totalCartItems;
-            } else {
-                badge.style.display = "none";
-            }
-        }
-
+        // Synchronized Cart & Stepper Controller for Product Portal
         function incrementCartItem(button) {
             const container = button.closest(".cart-action-container");
+            const productId = container.getAttribute("data-product-id");
             const stock = parseInt(container.getAttribute("data-stock")) || 0;
 
             const initialBtn = container.querySelector(".add-product-btn");
             const stepper = container.querySelector(".quantity-stepper");
             const input = container.querySelector(".item-count-input");
 
-            let currentQty = parseInt(input.value) || 0;
+            let cart = getCartData();
+            let currentQty = cart[productId] || 0;
 
-            // Restrict increment if it exceeds available stock limit
             if (currentQty >= stock) {
                 alert("⚠️ Stock limit reached! Only " + stock + " items available.");
                 return;
@@ -1004,35 +985,58 @@
             if (initialBtn && initialBtn.style.display !== "none") {
                 initialBtn.style.display = "none";
                 stepper.style.display = "inline-flex";
-                currentQty = 0;
             }
 
-            input.value = currentQty + 1;
-            totalCartItems++;
-            updateCartBadge();
+            currentQty++;
+            cart[productId] = currentQty;
+            saveCartData(cart);
+
+            if (input) input.value = currentQty;
         }
 
         function decrementCartItem(button) {
             const container = button.closest(".cart-action-container");
+            const productId = container.getAttribute("data-product-id");
+
             const initialBtn = container.querySelector(".add-product-btn");
             const stepper = container.querySelector(".quantity-stepper");
             const input = container.querySelector(".item-count-input");
 
-            let currentQty = parseInt(input.value) || 1;
+            let cart = getCartData();
+            let currentQty = cart[productId] || 1;
 
             if (currentQty > 1) {
-                input.value = currentQty - 1;
+                currentQty--;
+                cart[productId] = currentQty;
             } else {
-                input.value = 1;
-                stepper.style.display = "none";
+                delete cart[productId];
+                currentQty = 0;
+                if (stepper) stepper.style.display = "none";
                 if (initialBtn) initialBtn.style.display = "inline-block";
             }
 
-            if (totalCartItems > 0) {
-                totalCartItems--;
-                updateCartBadge();
-            }
+            saveCartData(cart);
+            if (input) input.value = currentQty;
         }
+
+        // Auto-restore steppers on page load from localStorage
+        document.addEventListener("DOMContentLoaded", function () {
+            const cart = getCartData();
+            document.querySelectorAll(".cart-action-container").forEach(container => {
+                const productId = container.getAttribute("data-product-id");
+                if (cart[productId] && cart[productId] > 0) {
+                    const initialBtn = container.querySelector(".add-product-btn");
+                    const stepper = container.querySelector(".quantity-stepper");
+                    const input = container.querySelector(".item-count-input");
+
+                    if (initialBtn && stepper && input) {
+                        initialBtn.style.display = "none";
+                        stepper.style.display = "inline-flex";
+                        input.value = cart[productId];
+                    }
+                }
+            });
+        });
     </script>
 
     <div th:replace="~{layout :: scripts}"></div>
