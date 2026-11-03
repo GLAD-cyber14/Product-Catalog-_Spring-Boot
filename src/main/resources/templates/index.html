@@ -959,13 +959,22 @@
         </div>
 
     </div>
-    <!-- =========================================================
-         SCRIPTS
-    ========================================================= -->
+  <script>
+        // Send POST request to Spring Boot backend controller: @PostMapping("/add/{productId}")[cite: 7]
+        async function syncCartWithBackend(productId) {
+            try {
+                await fetch('/cart/add/' + productId, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+            } catch (error) {
+                console.error("Failed to update backend cart:", error);
+            }
+        }
 
-    <script>
-        // Synchronized Cart & Stepper Controller for Product Portal
-        function incrementCartItem(button) {
+        async function incrementCartItem(button) {
             const container = button.closest(".cart-action-container");
             const productId = container.getAttribute("data-product-id");
             const stock = parseInt(container.getAttribute("data-stock")) || 0;
@@ -992,9 +1001,12 @@
             saveCartData(cart);
 
             if (input) input.value = currentQty;
+
+            // Trigger backend cart persistence[cite: 7]
+            await syncCartWithBackend(productId);
         }
 
-        function decrementCartItem(button) {
+        async function decrementCartItem(button) {
             const container = button.closest(".cart-action-container");
             const productId = container.getAttribute("data-product-id");
 
@@ -1038,7 +1050,6 @@
             });
         });
     </script>
-
     <div th:replace="~{layout :: scripts}"></div>
 </div>
 </body>
