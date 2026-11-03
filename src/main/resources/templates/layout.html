@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml" lang="en">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
+
 <!-- Fragment 1: Shared Header -->
 <head th:fragment="header-fragment(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- CSRF tokens so fetch() POSTs (cart sync) are accepted by Spring Security -->
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+    <meta name="cart-auth" content="1" sec:authorize="isAuthenticated()">
 
     <title th:text="${title}">Product Catalog</title>
 
@@ -35,6 +43,12 @@
             opacity: 0;
         }
 
+        /* Hide cart controls until the server's cart has loaded (no wrong-state flash) */
+        body:not(.cart-ready) .cart-action-container { visibility: hidden; }
+
+        /* A cart request is in flight for this product: block extra clicks */
+        .cart-action-container.cart-busy { pointer-events: none; cursor: progress; }
+
         /* Mobile-Friendly Cart Badge Styles */
         #cart-badge {
             padding: 0.25em 0.5em;
@@ -45,6 +59,7 @@
 </head>
 <body>
 
+<!-- Fragment 2: Navbar -->
 <nav class="navbar navbar-expand-lg modern-navbar" th:fragment="navbar">
 
     <!-- Top Loading Progress Bar Element -->
@@ -73,7 +88,7 @@
         <!-- Navigation -->
         <div class="collapse navbar-collapse" id="mainNavbar">
 
-            <div class="ms-auto d-flex gap-2 align-items-center flex-wrap">
+            <div class="ms-auto d-flex gap-1 align-items-center flex-wrap justify-content-end">
 
                 <a th:href="@{/}" class="nav-item-link">Home</a>
 
@@ -137,7 +152,7 @@
                     Register
                 </a>
 
-                <!-- Logout -->
+                <!-- Logout (clears the local cart so the next user starts fresh) -->
                 <form th:action="@{/logout}"
                       method="post"
                       th:if="${#authorization.expression('isAuthenticated()')}"
@@ -148,7 +163,6 @@
                 </form>
 
             </div>
-
         </div>
 
     </div>
@@ -191,6 +205,25 @@
             opacity: 0.85;
             cursor: not-allowed !important;
             pointer-events: none;
+        }
+
+        /* Non-blocking navigation progress bar */
+        #page-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: #0d6efd;
+            z-index: 100000;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Nav link that was just clicked: show spinner, ignore a second click */
+        .link-loading {
+            pointer-events: none;
+            opacity: 0.85;
         }
 
         /* Centered Full Screen Overlay */
@@ -237,53 +270,201 @@
     </style>
 
     <script>
-        // Global localStorage Cart Synchronizer
-        function getCartData() {
-            try {
-                return JSON.parse(localStorage.getItem("gladwin_cart")) || {};
-            } catch (e) {
-                return {};
+        // =====================================================================
+        // CART: the SERVER is the single source of truth.
+        // The browser keeps no cart of its own. Every ADD / + / - waits for the
+        // server, then redraws every card and the badge from the server's answer.
+        // =====================================================================
+
+        let cartState = {};                  // { "productId": quantity }, a mirror of the server
+        let cartQueue = Promise.resolve();   // cart requests run strictly one after another
+
+        // Kept so any older page that still calls these doesn't break.
+        function getCartData() { return cartState; }
+        function saveCartData(cart) { cartState = cart || {}; updateCartBadge(); }
+
+        function isCartUser() {
+            return !!document.querySelector('meta[name="cart-auth"]');
+        }
+
+        function csrfHeaders() {
+            const headers = { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' };
+            const token = document.querySelector('meta[name="_csrf"]');
+            const header = document.querySelector('meta[name="_csrf_header"]');
+            if (token && header) {
+                headers[header.getAttribute('content')] = token.getAttribute('content');
             }
+            return headers;
         }
 
-        function saveCartData(cart) {
-            localStorage.setItem("gladwin_cart", JSON.stringify(cart));
-            updateGlobalCartBadge();
+        async function cartFetch(method, url) {
+            const res = await fetch(url, {
+                method: method,
+                headers: csrfHeaders(),
+                credentials: 'same-origin'
+            });
+
+            // Session expired: Spring redirected us to the login page
+            if (res.redirected) {
+                window.location.href = res.url;
+                return null;
+            }
+
+            let data = null;
+            try { data = await res.json(); } catch (e) { /* no JSON body */ }
+
+            if (!res.ok) {
+                const err = new Error(method + " " + url + " -> " + res.status);
+                err.data = data;
+                throw err;
+            }
+            return data;
         }
 
-        function updateGlobalCartBadge() {
-            const cart = getCartData();
-            let totalItems = 0;
-            Object.values(cart).forEach(qty => {
-                totalItems += qty;
+        // ---------- Drawing ----------
+        function updateCartBadge() {
+            let total = 0;
+            Object.keys(cartState).forEach(function (k) {
+                total += parseInt(cartState[k]) || 0;
             });
 
             const badge = document.getElementById("cart-badge");
-            if (badge) {
-                if (totalItems > 0) {
-                    badge.style.display = "inline-block";
-                    badge.textContent = totalItems;
-                } else {
-                    badge.style.display = "none";
-                }
+            if (!badge) return;
+
+            if (total > 0) {
+                badge.style.display = "inline-block";
+                badge.textContent = total;
+            } else {
+                badge.style.display = "none";
+                badge.textContent = "0";
             }
         }
 
+        const ADD_BTN_SELECTOR = ".add-product-btn, .product-add-btn";
+
+        function showStepper(container, qty) {
+            const addBtn = container.querySelector(ADD_BTN_SELECTOR);
+            const stepper = container.querySelector(".quantity-stepper");
+            const input = container.querySelector(".item-count-input");
+            if (addBtn) addBtn.classList.add("d-none");
+            if (stepper) stepper.classList.remove("d-none");
+            if (input) input.value = qty;
+        }
+
+        function showAddButton(container) {
+            const addBtn = container.querySelector(ADD_BTN_SELECTOR);
+            const stepper = container.querySelector(".quantity-stepper");
+            if (addBtn) addBtn.classList.remove("d-none");
+            if (stepper) stepper.classList.add("d-none");
+        }
+
+        function renderCartCards() {
+            document.querySelectorAll(".cart-action-container").forEach(function (container) {
+                const qty = parseInt(cartState[container.getAttribute("data-product-id")]) || 0;
+                if (qty > 0) {
+                    showStepper(container, qty);
+                } else {
+                    showAddButton(container);
+                }
+            });
+            updateCartBadge();
+        }
+
+        // ---------- Loading the cart from the server ----------
+        async function loadCartState() {
+            try {
+                const res = await fetch('/cart/state', {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                });
+                if (res.ok && !res.redirected) {
+                    const data = await res.json();
+                    cartState = data.items || {};
+                }
+            } catch (e) {
+                console.error("Could not load cart:", e);
+            }
+            renderCartCards();
+            document.body.classList.add("cart-ready");
+        }
+
+        // ---------- ADD / + / - (each one waits for the server) ----------
+        function changeCart(button, action) {
+            const container = button.closest(".cart-action-container");
+            if (!container || container.dataset.busy === "1") return Promise.resolve();
+
+            const productId = container.getAttribute("data-product-id");
+            const stock = parseInt(container.getAttribute("data-stock")) || 0;
+
+            container.dataset.busy = "1";
+            container.classList.add("cart-busy");
+
+            // Inline spinner inside the clicked button while we wait for the server
+            const originalHtml = button.innerHTML;
+            const spinner = document.createElement("span");
+            spinner.className = "btn-spinner";
+            if (button.matches(ADD_BTN_SELECTOR)) {
+                button.prepend(spinner);                 // spinner + "ADD"
+            } else {
+                spinner.style.marginRight = "0";         // + / - buttons: spinner only
+                button.innerHTML = "";
+                button.appendChild(spinner);
+            }
+
+            cartQueue = cartQueue.then(async function () {
+                try {
+                    const data = await cartFetch('POST', '/cart/' + action + '/' + productId);
+                    if (data) {
+                        cartState = data.items || {};
+                        renderCartCards();
+                        if (data.limitReached) {
+                            alert("⚠️ Stock limit reached! Only " + stock + " items available.");
+                        }
+                    }
+                } catch (e) {
+                    console.error("Cart update failed:", e);
+                    if (e.data && e.data.error === "outofstock") {
+                        alert("Sorry, this item is out of stock.");
+                    } else {
+                        alert("Couldn't update your cart. Please try again.");
+                    }
+                    await loadCartState();       // re-sync with whatever the server really has
+                } finally {
+                    button.innerHTML = originalHtml;     // remove the spinner
+                    delete container.dataset.busy;
+                    container.classList.remove("cart-busy");
+                }
+            });
+
+            return cartQueue;
+        }
+
+        function incrementCartItem(button) { return changeCart(button, 'add'); }
+        function decrementCartItem(button) { return changeCart(button, 'decrease-product'); }
+
+        // ---------- Page start-up ----------
         document.addEventListener("DOMContentLoaded", function () {
-            // Synchronize cart badge on load
-            updateGlobalCartBadge();
+
+            // One-time cleanup of the old browser-side cart
+            try { localStorage.removeItem("gladwin_cart"); } catch (e) { /* ignore */ }
+
+            if (isCartUser()) {
+                loadCartState();
+            } else {
+                renderCartCards();
+                document.body.classList.add("cart-ready");
+            }
 
             // Inject full-screen loader modal dynamically if absent
             let fullLoader = document.getElementById("global-screen-loader");
             if (!fullLoader) {
                 fullLoader = document.createElement("div");
                 fullLoader.id = "global-screen-loader";
-                fullLoader.innerHTML = `
-                    <div class="loader-card">
-                        <span class="btn-spinner btn-spinner-lg"></span>
-                        <span class="loader-card-text">Processing...</span>
-                    </div>
-                `;
+                fullLoader.innerHTML =
+                    '<div class="loader-card">' +
+                    '<span class="btn-spinner btn-spinner-lg"></span>' +
+                    '<span class="loader-card-text">Processing...</span>' +
+                    '</div>';
                 document.body.appendChild(fullLoader);
             }
 
@@ -295,7 +476,7 @@
                 fullLoader.classList.remove("active");
             }
 
-            // Universal form submit handler (Button spinner + centered overlay)
+            // Universal form submit handler (button spinner + centered overlay)
             document.addEventListener("submit", function (e) {
                 const form = e.target;
                 if (!form) return;
@@ -314,22 +495,67 @@
                 showScreenLoader();
             });
 
-            // Universal link navigation loader
+            // ---- Link navigation: NON-BLOCKING feedback ----
+            // A thin progress bar at the top plus a small spinner inside the clicked
+            // nav link. The page stays fully usable while the next page loads.
+            let navBar = document.getElementById("page-progress");
+            if (!navBar) {
+                navBar = document.createElement("div");
+                navBar.id = "page-progress";
+                document.body.appendChild(navBar);
+            }
+            let navResetTimer = null;
+
+            function startNavProgress(link) {
+                navBar.style.transition = "none";
+                navBar.style.width = "0%";
+                navBar.style.opacity = "1";
+                void navBar.offsetWidth;                 // restart the animation
+                navBar.style.transition = "width 8s cubic-bezier(0.1, 0.8, 0.2, 1)";
+                navBar.style.width = "85%";
+
+                if (link.matches("nav.navbar .nav-item-link, nav.navbar .btn") &&
+                    !link.querySelector(".nav-link-spinner")) {
+                    const sp = document.createElement("span");
+                    sp.className = "btn-spinner nav-link-spinner";
+                    link.prepend(sp);
+                    link.classList.add("link-loading");
+                }
+
+                clearTimeout(navResetTimer);
+                navResetTimer = setTimeout(resetNavProgress, 15000);  // safety net
+            }
+
+            function resetNavProgress() {
+                clearTimeout(navResetTimer);
+                navBar.style.transition = "none";
+                navBar.style.width = "0%";
+                navBar.style.opacity = "0";
+                document.querySelectorAll(".nav-link-spinner").forEach(function (el) { el.remove(); });
+                document.querySelectorAll(".link-loading").forEach(function (el) {
+                    el.classList.remove("link-loading");
+                });
+            }
+
             document.addEventListener("click", function (e) {
                 const link = e.target.closest("a");
                 if (!link) return;
 
                 const href = link.getAttribute("href");
-                if (!href || href === "#" || href.startsWith("javascript") || link.target === "_blank") return;
+                if (!href || href.startsWith("#") || href.startsWith("javascript") || link.target === "_blank") return;
+                if (link.protocol !== "http:" && link.protocol !== "https:") return;   // mailto:, tel: ...
                 if (link.hostname && link.hostname !== window.location.hostname) return;
-                if (link.hasAttribute("data-bs-toggle")) return;
+                if (link.hasAttribute("data-bs-toggle") || link.hasAttribute("download")) return;
+                if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
 
-                showScreenLoader();
+                startNavProgress(link);
             });
 
-            // Restore state on navigation restore
-            window.addEventListener("pageshow", function () {
+            // Back/forward cache: hide the loader and re-sync the cart with the server
+            window.addEventListener("pageshow", function (e) {
                 hideScreenLoader();
+                resetNavProgress();
+                if (e.persisted && isCartUser()) loadCartState();
                 document.querySelectorAll(".btn-loading").forEach(function (btn) {
                     btn.classList.remove("btn-loading");
                     btn.disabled = false;

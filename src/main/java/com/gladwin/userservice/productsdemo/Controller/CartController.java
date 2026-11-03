@@ -6,12 +6,16 @@ import com.gladwin.userservice.productsdemo.Model.Product;
 import com.gladwin.userservice.productsdemo.Repository.CartItemRepository;
 import com.gladwin.userservice.productsdemo.Repository.ProductRepository;
 import com.gladwin.userservice.productsdemo.Repository.AppUserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/cart")
@@ -50,9 +54,25 @@ public class CartController {
         return "cart";
     }
 
-    // Add a product to the cart
+    // ------------------------------------------------------------------
+    // AJAX (fetch) endpoints used by the Home / Products pages.
+    // They work by PRODUCT id and ALWAYS answer with the full cart
+    // snapshot, so the browser can redraw straight from the server.
+    //   { success, items: { "productId": quantity, ... }, totalItems }
+    // ------------------------------------------------------------------
+
+    // Current cart of the logged-in user (called when a page loads)
+    @GetMapping("/state")
+    @ResponseBody
+    public ResponseEntity<?> cartState(Authentication authentication) {
+        AppUser user = getLoggedInUser(authentication);
+        return ResponseEntity.ok(cartSnapshot(user));
+    }
+
+    // Add one unit of a product (creates the row only if it doesn't exist yet)
     @PostMapping("/add/{productId}")
-    public String addToCart(
+    @ResponseBody
+    public ResponseEntity<?> addToCart(
             @PathVariable Long productId,
             Authentication authentication) {
 
@@ -61,34 +81,72 @@ public class CartController {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // Don't allow adding an out-of-stock product
         if (product.getStock() <= 0) {
-            return "redirect:/products?error=outofstock";
+            return ResponseEntity.badRequest().body(Map.of("error", "outofstock"));
         }
 
-        // Check if the product is already in the cart
+        boolean limitReached = false;
+
         CartItem cartItem = cartItemRepository
                 .findByUserAndProductId(user, productId)
                 .orElse(null);
 
         if (cartItem != null) {
-
-            // Don't allow quantity to exceed available stock
+            // Row already exists: only the number changes
             if (cartItem.getQuantity() < product.getStock()) {
                 cartItem.setQuantity(cartItem.getQuantity() + 1);
                 cartItemRepository.save(cartItem);
+            } else {
+                limitReached = true;
             }
-
         } else {
-
-            CartItem newCartItem =
-                    new CartItem(user, product, 1);
-
-            cartItemRepository.save(newCartItem);
+            try {
+                cartItemRepository.save(new CartItem(user, product, 1));
+            } catch (DataIntegrityViolationException e) {
+                // Two requests inserted the same (user, product) at the same moment.
+                // The unique constraint rejected the second one, so bump the existing row.
+                cartItemRepository.findByUserAndProductId(user, productId)
+                        .ifPresent(existing -> {
+                            if (existing.getQuantity() < product.getStock()) {
+                                existing.setQuantity(existing.getQuantity() + 1);
+                                cartItemRepository.save(existing);
+                            }
+                        });
+            }
         }
 
-        return "redirect:/products";
+        Map<String, Object> snapshot = cartSnapshot(user);
+        if (limitReached) {
+            snapshot.put("limitReached", true);
+        }
+        return ResponseEntity.ok(snapshot);
     }
+
+    // Remove one unit of a product (deletes the row when it reaches 0)
+    @PostMapping("/decrease-product/{productId}")
+    @ResponseBody
+    public ResponseEntity<?> decreaseProduct(
+            @PathVariable Long productId,
+            Authentication authentication) {
+
+        AppUser user = getLoggedInUser(authentication);
+
+        cartItemRepository.findByUserAndProductId(user, productId).ifPresent(item -> {
+            if (item.getQuantity() > 1) {
+                item.setQuantity(item.getQuantity() - 1);
+                cartItemRepository.save(item);
+            } else {
+                cartItemRepository.delete(item);
+            }
+        });
+
+        return ResponseEntity.ok(cartSnapshot(user));
+    }
+
+    // ------------------------------------------------------------------
+    // Form endpoints used by the "My Cart" page.
+    // They work by CART ITEM id and redirect back to /cart.
+    // ------------------------------------------------------------------
 
     // Increase quantity
     @PostMapping("/increase/{id}")
@@ -164,10 +222,27 @@ public class CartController {
         return "redirect:/cart";
     }
 
+    // The user's whole cart as { productId -> quantity } plus the unit total
+    private Map<String, Object> cartSnapshot(AppUser user) {
+        Map<String, Integer> items = new HashMap<>();
+        int total = 0;
+
+        for (CartItem ci : cartItemRepository.findByUser(user)) {
+            items.merge(String.valueOf(ci.getProduct().getId()), ci.getQuantity(), Integer::sum);
+            total += ci.getQuantity();
+        }
+
+        Map<String, Object> snapshot = new HashMap<>();
+        snapshot.put("success", true);
+        snapshot.put("items", items);
+        snapshot.put("totalItems", total);
+        return snapshot;
+    }
+
     // Find the currently logged-in user
     private AppUser getLoggedInUser(Authentication authentication) {
         String username = authentication.getName();
-        AppUser user = appUserRepository.findByUsername(username); // assuming it returns AppUser directly
+        AppUser user = appUserRepository.findByUsername(username);
 
         if (user == null) {
             throw new RuntimeException("Logged-in user not found");

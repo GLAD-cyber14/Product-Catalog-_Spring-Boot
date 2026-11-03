@@ -686,13 +686,13 @@
 
                                                 <!-- Initial ADD Button -->
                                                 <button type="button"
-                                                        class="btn btn-outline-success fw-bold add-product-btn no-loader"
+                                                        class="btn btn-outline-success fw-bold add-product-btn"
                                                         onclick="incrementCartItem(this)">
                                                     ADD
                                                 </button>
 
-                                                <!-- Stepper Controls [ - ] [ count ] [ + ] (Hidden by default) -->
-                                                <div class="input-group input-group-sm quantity-stepper" style="display: none; width: 100px;">
+                                                <!-- Stepper Controls [ - ] [ count ] [ + ] (Hidden by default using d-none) -->
+                                                <div class="input-group input-group-sm quantity-stepper d-none" style="width: 100px;">
                                                     <button class="btn btn-outline-success px-2 py-1" type="button" onclick="decrementCartItem(this)">-</button>
                                                     <input type="text" class="form-control text-center item-count-input py-1" value="1" readonly style="max-width: 40px; font-weight: 600;">
                                                     <button class="btn btn-outline-success px-2 py-1" type="button" onclick="incrementCartItem(this)">+</button>
@@ -959,86 +959,8 @@
         </div>
 
     </div>
-    <!-- =========================================================
-         SCRIPTS
-    ========================================================= -->
 
-    <script>
-        // Synchronized Cart & Stepper Controller for Product Portal
-        function incrementCartItem(button) {
-            const container = button.closest(".cart-action-container");
-            const productId = container.getAttribute("data-product-id");
-            const stock = parseInt(container.getAttribute("data-stock")) || 0;
-
-            const initialBtn = container.querySelector(".add-product-btn");
-            const stepper = container.querySelector(".quantity-stepper");
-            const input = container.querySelector(".item-count-input");
-
-            let cart = getCartData();
-            let currentQty = cart[productId] || 0;
-
-            if (currentQty >= stock) {
-                alert("⚠️ Stock limit reached! Only " + stock + " items available.");
-                return;
-            }
-
-            if (initialBtn && initialBtn.style.display !== "none") {
-                initialBtn.style.display = "none";
-                stepper.style.display = "inline-flex";
-            }
-
-            currentQty++;
-            cart[productId] = currentQty;
-            saveCartData(cart);
-
-            if (input) input.value = currentQty;
-        }
-
-        function decrementCartItem(button) {
-            const container = button.closest(".cart-action-container");
-            const productId = container.getAttribute("data-product-id");
-
-            const initialBtn = container.querySelector(".add-product-btn");
-            const stepper = container.querySelector(".quantity-stepper");
-            const input = container.querySelector(".item-count-input");
-
-            let cart = getCartData();
-            let currentQty = cart[productId] || 1;
-
-            if (currentQty > 1) {
-                currentQty--;
-                cart[productId] = currentQty;
-            } else {
-                delete cart[productId];
-                currentQty = 0;
-                if (stepper) stepper.style.display = "none";
-                if (initialBtn) initialBtn.style.display = "inline-block";
-            }
-
-            saveCartData(cart);
-            if (input) input.value = currentQty;
-        }
-
-        // Auto-restore steppers on page load from localStorage
-        document.addEventListener("DOMContentLoaded", function () {
-            const cart = getCartData();
-            document.querySelectorAll(".cart-action-container").forEach(container => {
-                const productId = container.getAttribute("data-product-id");
-                if (cart[productId] && cart[productId] > 0) {
-                    const initialBtn = container.querySelector(".add-product-btn");
-                    const stepper = container.querySelector(".quantity-stepper");
-                    const input = container.querySelector(".item-count-input");
-
-                    if (initialBtn && stepper && input) {
-                        initialBtn.style.display = "none";
-                        stepper.style.display = "inline-flex";
-                        input.value = cart[productId];
-                    }
-                }
-            });
-        });
-    </script>
-
+    <!-- Cart logic (ADD / + / -) lives in layout.html, in the "scripts" fragment. -->
     <div th:replace="~{layout :: scripts}"></div>
 </div>
 </body>

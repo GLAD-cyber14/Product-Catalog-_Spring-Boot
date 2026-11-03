@@ -3,7 +3,13 @@ package com.gladwin.userservice.productsdemo.Model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "cart_item")
+@Table(
+        name = "cart_item",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_cart_item_user_product",
+                columnNames = {"user_id", "product_id"}
+        )
+)
 public class CartItem {
 
     @Id
