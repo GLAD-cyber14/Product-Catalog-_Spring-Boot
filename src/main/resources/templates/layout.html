@@ -3,25 +3,19 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       lang="en">
 
-<!-- Fragment 1: Shared Header -->
 <head th:fragment="header-fragment(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- CSRF tokens so fetch() POSTs (cart sync) are accepted by Spring Security -->
     <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
     <meta name="cart-auth" content="1" sec:authorize="isAuthenticated()">
 
     <title th:text="${title}">Product Catalog</title>
 
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Product Page CSS -->
     <link rel="stylesheet" th:href="@{/css/products.css}">
 
-    <!-- Top Loading Bar Styles -->
     <style>
         .loading-bar {
             position: fixed;
@@ -34,22 +28,12 @@
             transition: width 0.3s ease-out, opacity 0.3s ease-in;
             opacity: 0;
         }
-        .loading-bar.loading {
-            opacity: 1;
-            width: 75%;
-        }
-        .loading-bar.complete {
-            width: 100%;
-            opacity: 0;
-        }
+        .loading-bar.loading { opacity: 1; width: 75%; }
+        .loading-bar.complete { width: 100%; opacity: 0; }
 
-        /* Hide cart controls until the server's cart has loaded (no wrong-state flash) */
         body:not(.cart-ready) .cart-action-container { visibility: hidden; }
-
-        /* A cart request is in flight for this product: block extra clicks */
         .cart-action-container.cart-busy { pointer-events: none; cursor: progress; }
 
-        /* Mobile-Friendly Cart Badge Styles */
         #cart-badge {
             padding: 0.25em 0.5em;
             font-weight: 700;
@@ -59,22 +43,16 @@
 </head>
 <body>
 
-<!-- Fragment 2: Navbar -->
 <nav class="navbar navbar-expand-lg modern-navbar" th:fragment="navbar">
-
-    <!-- Top Loading Progress Bar Element -->
     <div id="loading-bar" class="loading-bar"></div>
 
     <div class="container-fluid px-4">
-
-        <!-- Brand -->
         <a class="navbar-brand modern-brand" th:href="@{/}">
             <img th:src="@{/images/gladwin-logo.png}"
                  alt="Gladwin Premium Product Store"
                  class="gladwin-logo">
         </a>
 
-        <!-- Mobile Toggle -->
         <button class="navbar-toggler"
                 type="button"
                 data-bs-toggle="collapse"
@@ -85,31 +63,22 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Navigation -->
         <div class="collapse navbar-collapse" id="mainNavbar">
-
             <div class="ms-auto d-flex gap-1 align-items-center flex-wrap justify-content-end">
-
                 <a th:href="@{/}" class="nav-item-link">Home</a>
-
                 <a th:href="@{/products}" class="nav-item-link">Products</a>
 
-                <!-- Admin Orders -->
                 <a th:href="@{/admin/orders}"
                    class="nav-item-link"
                    sec:authorize="hasRole('ADMIN')">
                     📦 All Orders
                 </a>
 
-                <!-- Cart with Inline Mobile-Friendly Badge -->
                 <a th:href="@{/cart}" class="nav-item-link d-inline-flex align-items-center gap-2">
                     <span>🛒 Cart</span>
-                    <span id="cart-badge" class="badge rounded-pill bg-danger" style="display: none; font-size: 0.65rem;">
-                        0
-                    </span>
+                    <span id="cart-badge" class="badge rounded-pill bg-danger" style="display: none; font-size: 0.65rem;">0</span>
                 </a>
 
-                <!-- My Orders -->
                 <a th:href="@{/orders}"
                    class="nav-item-link"
                    sec:authorize="isAuthenticated()">
@@ -134,47 +103,34 @@
                     User Management
                 </a>
 
-                <a th:href="@{/profile}" class="btn btn-light">
-                    👤 My Profile
-                </a>
+                <a th:href="@{/profile}" class="btn btn-light">👤 My Profile</a>
 
-                <!-- Login -->
                 <a th:href="@{/login}"
                    class="nav-item-link"
                    th:if="${!#authorization.expression('isAuthenticated()')}">
                     Login
                 </a>
 
-                <!-- Register -->
                 <a th:href="@{/register}"
                    class="nav-item-link"
                    th:if="${!#authorization.expression('isAuthenticated()')}">
                     Register
                 </a>
 
-                <!-- Logout (clears the local cart so the next user starts fresh) -->
                 <form th:action="@{/logout}"
                       method="post"
                       th:if="${#authorization.expression('isAuthenticated()')}"
                       style="display:inline;">
-                    <button type="submit" class="nav-item-link">
-                        Logout
-                    </button>
+                    <button type="submit" class="nav-item-link">Logout</button>
                 </form>
-
             </div>
         </div>
-
     </div>
-
 </nav>
 
-<!-- Fragment 3: Shared JavaScript Dependencies & Universal Handlers -->
 <div th:fragment="scripts">
-    <!-- Bootstrap JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Universal CSS Spinner & Loader Styles -->
     <style>
         .btn-spinner {
             display: inline-block;
@@ -187,7 +143,6 @@
             vertical-align: -2px;
             margin-right: 6px;
         }
-
         .btn-spinner-lg {
             width: 36px;
             height: 36px;
@@ -196,18 +151,46 @@
             border-right-color: transparent;
             margin-right: 0;
         }
-
         @keyframes btn-spin {
             to { transform: rotate(360deg); }
         }
-
         .btn-loading {
             opacity: 0.85;
             cursor: not-allowed !important;
             pointer-events: none;
         }
-
-        /* Non-blocking navigation progress bar */
+        .product-add-btn {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .quantity-stepper {
+            width: 110px;
+            max-width: 100%;
+            display: inline-flex;
+            flex-shrink: 0;
+        }
+        .quantity-stepper.d-none { display: none !important; }
+        .quantity-stepper .btn {
+            padding: 4px 8px;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .item-count-input {
+            background-color: #fff !important;
+            font-weight: 600;
+            color: #059669;
+            font-size: 13px;
+            padding: 4px 2px;
+        }
         #page-progress {
             position: fixed;
             top: 0;
@@ -219,67 +202,13 @@
             opacity: 0;
             pointer-events: none;
         }
-
-        /* Nav link that was just clicked: show spinner, ignore a second click */
-        .link-loading {
-            pointer-events: none;
-            opacity: 0.85;
-        }
-
-        /* Centered Full Screen Overlay */
-        #global-screen-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(4px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 99999;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease-in-out;
-        }
-
-        #global-screen-loader.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .loader-card {
-            background: #ffffff;
-            padding: 24px 32px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .loader-card-text {
-            font-size: 14px;
-            font-weight: 500;
-            color: #495057;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
     </style>
 
     <script>
-        // =====================================================================
-        // CART: the SERVER is the single source of truth.
-        // The browser keeps no cart of its own. Every ADD / + / - waits for the
-        // server, then redraws every card and the badge from the server's answer.
-        // =====================================================================
+        let cartState = {};
+        let cartQueue = Promise.resolve();
+        let cartUiBooted = false;
 
-        let cartState = {};                  // { "productId": quantity }, a mirror of the server
-        let cartQueue = Promise.resolve();   // cart requests run strictly one after another
-
-        // Kept so any older page that still calls these doesn't break.
         function getCartData() { return cartState; }
         function saveCartData(cart) { cartState = cart || {}; updateCartBadge(); }
 
@@ -303,16 +232,12 @@
                 headers: csrfHeaders(),
                 credentials: 'same-origin'
             });
-
-            // Session expired: Spring redirected us to the login page
             if (res.redirected) {
                 window.location.href = res.url;
                 return null;
             }
-
             let data = null;
             try { data = await res.json(); } catch (e) { /* no JSON body */ }
-
             if (!res.ok) {
                 const err = new Error(method + " " + url + " -> " + res.status);
                 err.data = data;
@@ -321,16 +246,13 @@
             return data;
         }
 
-        // ---------- Drawing ----------
         function updateCartBadge() {
             let total = 0;
             Object.keys(cartState).forEach(function (k) {
-                total += parseInt(cartState[k]) || 0;
+                total += parseInt(cartState[k], 10) || 0;
             });
-
             const badge = document.getElementById("cart-badge");
             if (!badge) return;
-
             if (total > 0) {
                 badge.style.display = "inline-block";
                 badge.textContent = total;
@@ -342,6 +264,13 @@
 
         const ADD_BTN_SELECTOR = ".add-product-btn, .product-add-btn";
 
+        function qtyForProduct(productId) {
+            if (productId == null || productId === "") return 0;
+            const key = String(productId);
+            const raw = cartState[key] != null ? cartState[key] : cartState[productId];
+            return parseInt(raw, 10) || 0;
+        }
+
         function showStepper(container, qty) {
             const addBtn = container.querySelector(ADD_BTN_SELECTOR);
             const stepper = container.querySelector(".quantity-stepper");
@@ -350,17 +279,26 @@
             if (stepper) stepper.classList.remove("d-none");
             if (input) input.value = qty;
         }
-
         function showAddButton(container) {
             const addBtn = container.querySelector(ADD_BTN_SELECTOR);
             const stepper = container.querySelector(".quantity-stepper");
+            const input = container.querySelector(".item-count-input");
+
+            // Products page: keep - / count / + visible even at quantity 0
+            if (container.classList.contains("always-show-stepper")) {
+                if (addBtn) addBtn.classList.add("d-none");
+                if (stepper) stepper.classList.remove("d-none");
+                if (input) input.value = 0;
+                return;
+            }
+
             if (addBtn) addBtn.classList.remove("d-none");
             if (stepper) stepper.classList.add("d-none");
         }
 
         function renderCartCards() {
             document.querySelectorAll(".cart-action-container").forEach(function (container) {
-                const qty = parseInt(cartState[container.getAttribute("data-product-id")]) || 0;
+                const qty = qtyForProduct(container.getAttribute("data-product-id"));
                 if (qty > 0) {
                     showStepper(container, qty);
                 } else {
@@ -370,7 +308,6 @@
             updateCartBadge();
         }
 
-        // ---------- Loading the cart from the server ----------
         async function loadCartState() {
             try {
                 const res = await fetch('/cart/state', {
@@ -388,25 +325,23 @@
             document.body.classList.add("cart-ready");
         }
 
-        // ---------- ADD / + / - (each one waits for the server) ----------
         function changeCart(button, action) {
             const container = button.closest(".cart-action-container");
             if (!container || container.dataset.busy === "1") return Promise.resolve();
 
             const productId = container.getAttribute("data-product-id");
-            const stock = parseInt(container.getAttribute("data-stock")) || 0;
+            const stock = parseInt(container.getAttribute("data-stock"), 10) || 0;
 
             container.dataset.busy = "1";
             container.classList.add("cart-busy");
 
-            // Inline spinner inside the clicked button while we wait for the server
             const originalHtml = button.innerHTML;
             const spinner = document.createElement("span");
             spinner.className = "btn-spinner";
             if (button.matches(ADD_BTN_SELECTOR)) {
-                button.prepend(spinner);                 // spinner + "ADD"
+                button.prepend(spinner);
             } else {
-                spinner.style.marginRight = "0";         // + / - buttons: spinner only
+                spinner.style.marginRight = "0";
                 button.innerHTML = "";
                 button.appendChild(spinner);
             }
@@ -428,9 +363,9 @@
                     } else {
                         alert("Couldn't update your cart. Please try again.");
                     }
-                    await loadCartState();       // re-sync with whatever the server really has
+                    await loadCartState();
                 } finally {
-                    button.innerHTML = originalHtml;     // remove the spinner
+                    button.innerHTML = originalHtml;
                     delete container.dataset.busy;
                     container.classList.remove("cart-busy");
                 }
@@ -442,10 +377,10 @@
         function incrementCartItem(button) { return changeCart(button, 'add'); }
         function decrementCartItem(button) { return changeCart(button, 'decrease-product'); }
 
-        // ---------- Page start-up ----------
-        document.addEventListener("DOMContentLoaded", function () {
+        function bootCartUi() {
+            if (cartUiBooted) return;
+            cartUiBooted = true;
 
-            // One-time cleanup of the old browser-side cart
             try { localStorage.removeItem("gladwin_cart"); } catch (e) { /* ignore */ }
 
             if (isCartUser()) {
@@ -455,115 +390,87 @@
                 document.body.classList.add("cart-ready");
             }
 
-            // Inject full-screen loader modal dynamically if absent
-            let fullLoader = document.getElementById("global-screen-loader");
-            if (!fullLoader) {
-                fullLoader = document.createElement("div");
-                fullLoader.id = "global-screen-loader";
-                fullLoader.innerHTML =
-                    '<div class="loader-card">' +
-                    '<span class="btn-spinner btn-spinner-lg"></span>' +
-                    '<span class="loader-card-text">Processing...</span>' +
-                    '</div>';
-                document.body.appendChild(fullLoader);
-            }
-
-            function showScreenLoader() {
-                fullLoader.classList.add("active");
-            }
-
-            function hideScreenLoader() {
-                fullLoader.classList.remove("active");
-            }
-
-            // Universal form submit handler (button spinner + centered overlay)
-            document.addEventListener("submit", function (e) {
-                const form = e.target;
-                if (!form) return;
-
-                const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
-                if (submitBtn && !submitBtn.classList.contains("no-spinner")) {
-                    submitBtn.classList.add("btn-loading");
-                    submitBtn.disabled = true;
-
-                    if (!submitBtn.querySelector(".btn-spinner")) {
-                        const spinner = document.createElement("span");
-                        spinner.className = "btn-spinner";
-                        submitBtn.prepend(spinner);
-                    }
-                }
-                showScreenLoader();
-            });
-
-            // ---- Link navigation: NON-BLOCKING feedback ----
-            // A thin progress bar at the top plus a small spinner inside the clicked
-            // nav link. The page stays fully usable while the next page loads.
             let navBar = document.getElementById("page-progress");
             if (!navBar) {
                 navBar = document.createElement("div");
                 navBar.id = "page-progress";
                 document.body.appendChild(navBar);
             }
-            let navResetTimer = null;
+            let resetTimer = null;
 
-            function startNavProgress(link) {
+            function startProgressBar() {
                 navBar.style.transition = "none";
                 navBar.style.width = "0%";
                 navBar.style.opacity = "1";
-                void navBar.offsetWidth;                 // restart the animation
+                void navBar.offsetWidth;
                 navBar.style.transition = "width 8s cubic-bezier(0.1, 0.8, 0.2, 1)";
                 navBar.style.width = "85%";
-
-                if (link.matches("nav.navbar .nav-item-link, nav.navbar .btn") &&
-                    !link.querySelector(".nav-link-spinner")) {
-                    const sp = document.createElement("span");
-                    sp.className = "btn-spinner nav-link-spinner";
-                    link.prepend(sp);
-                    link.classList.add("link-loading");
-                }
-
-                clearTimeout(navResetTimer);
-                navResetTimer = setTimeout(resetNavProgress, 15000);  // safety net
+                clearTimeout(resetTimer);
+                resetTimer = setTimeout(resetLoadingFeedback, 15000);
             }
 
-            function resetNavProgress() {
-                clearTimeout(navResetTimer);
+            function addInlineSpinner(el) {
+                if (!el || el.classList.contains("btn-loading")) return;
+                if (el.tagName !== "INPUT" && !el.querySelector(".inline-spinner")) {
+                    const sp = document.createElement("span");
+                    sp.className = "btn-spinner inline-spinner";
+                    el.prepend(sp);
+                }
+                el.classList.add("btn-loading");
+            }
+
+            function resetLoadingFeedback() {
+                clearTimeout(resetTimer);
                 navBar.style.transition = "none";
                 navBar.style.width = "0%";
                 navBar.style.opacity = "0";
-                document.querySelectorAll(".nav-link-spinner").forEach(function (el) { el.remove(); });
-                document.querySelectorAll(".link-loading").forEach(function (el) {
-                    el.classList.remove("link-loading");
+                document.querySelectorAll(".inline-spinner").forEach(function (el) { el.remove(); });
+                document.querySelectorAll(".btn-loading").forEach(function (el) {
+                    el.classList.remove("btn-loading");
                 });
             }
+
+            document.addEventListener("submit", function (e) {
+                const form = e.target;
+                if (!form || form.classList.contains("no-loader")) return;
+                const btn = e.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+                if (btn && !btn.classList.contains("no-spinner") && !btn.classList.contains("no-loader")) {
+                    addInlineSpinner(btn);
+                }
+                startProgressBar();
+            });
 
             document.addEventListener("click", function (e) {
                 const link = e.target.closest("a");
                 if (!link) return;
-
                 const href = link.getAttribute("href");
                 if (!href || href.startsWith("#") || href.startsWith("javascript") || link.target === "_blank") return;
-                if (link.protocol !== "http:" && link.protocol !== "https:") return;   // mailto:, tel: ...
+                if (link.protocol !== "http:" && link.protocol !== "https:") return;
                 if (link.hostname && link.hostname !== window.location.hostname) return;
                 if (link.hasAttribute("data-bs-toggle") || link.hasAttribute("download")) return;
+                if (link.classList.contains("no-loader")) return;
                 if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
-
-                startNavProgress(link);
+                startProgressBar();
+                if (!link.querySelector("img") && link.textContent.trim().length <= 40) {
+                    addInlineSpinner(link);
+                }
             });
 
-            // Back/forward cache: hide the loader and re-sync the cart with the server
+            document.addEventListener("visibilitychange", function () {
+                if (!document.hidden && isCartUser()) loadCartState();
+            });
+
             window.addEventListener("pageshow", function (e) {
-                hideScreenLoader();
-                resetNavProgress();
+                resetLoadingFeedback();
                 if (e.persisted && isCartUser()) loadCartState();
-                document.querySelectorAll(".btn-loading").forEach(function (btn) {
-                    btn.classList.remove("btn-loading");
-                    btn.disabled = false;
-                    const spinner = btn.querySelector(".btn-spinner");
-                    if (spinner) spinner.remove();
-                });
             });
-        });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", bootCartUi);
+        } else {
+            bootCartUi();
+        }
     </script>
 </div>
 </body>
