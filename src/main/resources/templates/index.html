@@ -43,13 +43,14 @@
                     <form th:action="@{/products/save}"
                           th:object="${productForm}"
                           method="post"
+                          id="productAdminForm"
                           enctype="multipart/form-data">
 
                         <input type="hidden" th:field="*{id}">
 
                         <div class="mb-3">
                             <label for="name" class="form-label fw-bold">Product Title</label>
-                            <input type="text" id="name" th:field="*{name}" class="form-control"
+                            <input type="text" id="name" th:field="*{name}" class="form-control product-input"
                                    placeholder="e.g., Ultra Keyboard" required>
                         </div>
 
@@ -58,19 +59,19 @@
                             <div class="input-group">
                                 <span class="input-group-text">₹</span>
                                 <input type="number" id="price" th:field="*{price}" step="0.01" min="0"
-                                       class="form-control" placeholder="0.00" required>
+                                       class="form-control product-input" placeholder="0.00" required>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label for="stock" class="form-label fw-bold">Stock Quantity</label>
-                            <input type="number" id="stock" th:field="*{stock}" class="form-control"
+                            <input type="number" id="stock" th:field="*{stock}" class="form-control product-input"
                                    placeholder="Enter available stock" min="0" required>
                         </div>
 
                         <div class="mb-3">
                             <label for="categoryid" class="form-label fw-bold">Subcategory</label>
-                            <select id="categoryid" th:field="*{categoryid}" class="form-select" required>
+                            <select id="categoryid" th:field="*{categoryid}" class="form-select product-input" required>
                                 <option value="0">Select a subcategory</option>
                                 <th:block th:each="main : ${mainCategories}">
                                     <optgroup th:label="${main.categoryname}">
@@ -87,7 +88,7 @@
 
                         <div class="mb-3">
                             <label for="imageFile" class="form-label fw-bold">Product Image</label>
-                            <input type="file" id="imageFile" name="imageFile" class="form-control" accept="image/*">
+                            <input type="file" id="imageFile" name="imageFile" class="form-control product-input" accept="image/*">
                             <small class="text-muted">Select a JPG, JPEG, PNG or other image.</small>
                         </div>
 
@@ -101,7 +102,7 @@
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit"
+                            <button type="submit" id="saveProductBtn"
                                     th:classappend="${productForm.id != 0} ? 'btn-warning' : 'btn-primary'"
                                     class="btn fw-bold">
                                 💾 Save Product
@@ -195,12 +196,12 @@
                             <div class="col" th:each="prod : ${availableProducts}">
                                 <div class="card h-100 border-0 shadow-sm product-card">
 
-                                    <div class="position-relative p-3 text-center product-image-box">
+                                    <div class="position-relative p-3 text-center product-image-box" style="height: 160px; overflow: hidden; border-top-left-radius: 14px; border-top-right-radius: 14px;">
                                         <img th:if="${prod.image != null and !prod.image.isEmpty()}"
                                              th:src="@{${prod.image}}"
                                              th:alt="${prod.name}"
                                              class="img-fluid"
-                                             style="width: 100%; height: 200px; object-fit: contain;">
+                                             style="width: 100%; height: 140px; object-fit: contain;">
                                         <div th:unless="${prod.image != null and !prod.image.isEmpty()}"
                                              class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
                                             <div class="fs-1">📷</div>
@@ -333,5 +334,44 @@
 </div>
 
 <div th:replace="~{layout :: scripts}"></div>
+
+<!-- Dynamic Form Change Detection Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("productAdminForm");
+        if (!form) return;
+
+        const saveBtn = document.getElementById("saveProductBtn");
+        if (!saveBtn) return;
+
+        const idField = form.querySelector("input[name='id']");
+        const isEditMode = idField && idField.value !== "" && idField.value !== "0" && idField.value !== "null";
+
+        const inputs = form.querySelectorAll(".product-input");
+        const initialValues = Array.from(inputs).map(input => input.type === 'file' ? '' : input.value);
+
+        if (isEditMode) {
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = "0.6";
+        }
+
+        form.addEventListener("input", function () {
+            let hasChanged = false;
+            inputs.forEach((input, index) => {
+                if (input.type === 'file') {
+                    if (input.files.length > 0) hasChanged = true;
+                } else if (input.value !== initialValues[index]) {
+                    hasChanged = true;
+                }
+            });
+
+            if (isEditMode) {
+                saveBtn.disabled = !hasChanged;
+                saveBtn.style.opacity = hasChanged ? "1" : "0.6";
+            }
+        });
+    });
+</script>
+
 </body>
 </html>

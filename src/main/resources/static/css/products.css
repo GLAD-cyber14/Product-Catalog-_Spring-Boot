@@ -264,6 +264,47 @@ body.bg-light .col-12 .row-cols-xl-4 { --bs-gutter-x:14px; --bs-gutter-y:16px; }
     justify-content:center !important; flex-shrink:0 !important; white-space:nowrap !important;
     font-size:13px !important; font-weight:700 !important; border-radius:7px !important;
 }
+/* =========================================================
+   UNIFORM PRODUCT CARD IMAGES (FIX BULGING / OVERFLOW)
+========================================================= */
+.product-image-box {
+    height: 180px !important;
+    padding: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #f8fafc, #f0fdf4) !important;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    overflow: hidden !important;
+}
+
+.product-card img,
+.card-img-top,
+.product-image {
+    width: 100% !important;
+    height: 160px !important;
+    object-fit: contain !important; /* Keeps the whole image inside bounds without distortion */
+    background-color: transparent !important;
+    border-radius: 10px !important;
+    transition: transform 0.2s ease;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.04);
+}
+
+/* Responsive adjustment for tablets and mobile devices */
+@media (max-width: 768px) {
+    .product-image-box {
+        height: 140px !important;
+    }
+    .product-card img,
+    .card-img-top,
+    .product-image {
+        height: 125px !important;
+    }
+}
 /* Product-page cart: keep + / - visible and unclipped */
 .product-card {
     overflow: visible !important;
@@ -576,6 +617,29 @@ body.bg-light .pagination .page-item.active .page-link { color:#fff !important; 
         color: #4f46e5 !important;
         background: linear-gradient(135deg, #eef2ff, #e0f2fe) !important;
 
+    }
+    /* =========================================================
+   FIX PRODUCT CARD IMAGES (PREVENT OVERFLOW)
+========================================================= */
+    .product-card img,
+    .card-img-top,
+    .card img {
+        width: 100%;
+        height: 180px;             /* Fixed uniform height across all devices */
+        object-fit: contain;       /* Keeps the full image inside bounds without stretching */
+        background-color: #f9fafb; /* Soft backdrop for transparent images */
+        padding: 10px;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    /* Responsive adjustment for mobile and tablets */
+    @media (max-width: 768px) {
+        .product-card img,
+        .card-img-top,
+        .card img {
+            height: 150px;         /* Slightly smaller box on smaller screens */
+        }
     }
 
 

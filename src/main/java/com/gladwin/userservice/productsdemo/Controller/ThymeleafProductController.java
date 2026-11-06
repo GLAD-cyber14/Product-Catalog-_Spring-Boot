@@ -8,6 +8,8 @@ import com.gladwin.userservice.productsdemo.Repository.ProductRepository;
 import com.gladwin.userservice.productsdemo.service.CloudinaryService;
 import com.gladwin.userservice.productsdemo.Repository.PurchaseRepository;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -42,11 +44,45 @@ public class ThymeleafProductController {
     private CloudinaryService cloudinaryService;
 
     @Autowired
+    private Cloudinary cloudinary; // Injected for deleting old assets
+
+    @Autowired
     private PurchaseRepository purchaseRepository;
 
 
     @Value("${app.upload.dir}")
     private String uploadDir;
+
+
+    // ============================================================
+    // HELPER: SANITIZE FOLDER NAMES TO PREVENT DUPLICATES
+    // ============================================================
+    private String sanitizeFolderName(String name) {
+        if (name == null || name.trim().isEmpty()) return "general";
+        return name.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "_");
+    }
+
+
+    // ============================================================
+    // HELPER: DELETE OLD CLOUDINARY IMAGE
+    // ============================================================
+    private void deleteOldCloudinaryImage(String imageUrl) {
+        if (imageUrl != null && imageUrl.contains("cloudinary.com")) {
+            try {
+                String pathPart = imageUrl.substring(imageUrl.indexOf("/upload/") + 8);
+                if (pathPart.matches("^v\\d+/.*")) {
+                    pathPart = pathPart.replaceFirst("^v\\d+/", "");
+                }
+                int lastDot = pathPart.lastIndexOf('.');
+                if (lastDot != -1) {
+                    pathPart = pathPart.substring(0, lastDot);
+                }
+                cloudinary.uploader().destroy(pathPart, ObjectUtils.emptyMap());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 
     // ============================================================
@@ -126,10 +162,6 @@ public class ThymeleafProductController {
 
         // --------------------------------------------------------
         // 5. START WITH ALL PRODUCTS
-        //
-        // IMPORTANT:
-        // When /products is opened without categoryId,
-        // ALL PRODUCTS are shown.
         // --------------------------------------------------------
 
         List<Product> filteredProducts = allProducts;
@@ -140,11 +172,6 @@ public class ThymeleafProductController {
         // --------------------------------------------------------
 
         if (selectedCategory != null) {
-
-
-            // ----------------------------------------------------
-            // SUBCATEGORY SELECTED
-            // ----------------------------------------------------
 
             if (selectedCategory.getParent() != null) {
 
@@ -157,18 +184,11 @@ public class ThymeleafProductController {
                         .collect(Collectors.toList());
             }
 
-
-            // ----------------------------------------------------
-            // MAIN CATEGORY SELECTED
-            // ----------------------------------------------------
-
             else {
 
                 int mainId =
                         selectedCategory.getCategoryid();
 
-
-                // Find children of the main category
                 List<Integer> childIds = categories.stream()
                         .filter(category ->
                                 category.getParent() != null
@@ -177,11 +197,6 @@ public class ThymeleafProductController {
                                                 .getCategoryid() == mainId)
                         .map(Category::getCategoryid)
                         .collect(Collectors.toList());
-
-
-                // Include:
-                // 1. Products assigned directly to main category
-                // 2. Products assigned to its subcategories
 
                 filteredProducts = allProducts.stream()
                         .filter(product ->
@@ -192,14 +207,6 @@ public class ThymeleafProductController {
                         .collect(Collectors.toList());
             }
         }
-
-
-        // --------------------------------------------------------
-        // SEARCH
-        // A search such as "laptop" should show the laptop section
-        // and products belonging to that category, even when the
-        // individual product name does not contain the word laptop.
-        // --------------------------------------------------------
 
         if (search != null && !search.trim().isEmpty()) {
 
@@ -213,10 +220,6 @@ public class ThymeleafProductController {
                                     .contains(searchText))
                     .collect(Collectors.toList());
 
-            // If the search matches a category, category search takes
-            // priority over product-name search.
-            // For a MAIN category, include products assigned directly
-            // to that category and to all of its immediate subcategories.
             List<Integer> matchingCategoryIds = matchingCategories.stream()
                     .flatMap(category -> {
                         if (category.getParent() == null) {
@@ -247,8 +250,6 @@ public class ThymeleafProductController {
 
             } else {
 
-                // No category matched, so search by product name.
-                // Partial and case-insensitive searches are supported.
                 filteredProducts = filteredProducts.stream()
                         .filter(product ->
                                 product.getName() != null
@@ -258,8 +259,6 @@ public class ThymeleafProductController {
                         .collect(Collectors.toList());
             }
 
-            // When the search itself selected a category, show that
-            // category's navigation section on the page.
             if (categoryId == null && !matchingCategories.isEmpty()) {
 
                 Category matchedCategory = matchingCategories.get(0);
@@ -344,8 +343,6 @@ public class ThymeleafProductController {
 
         // --------------------------------------------------------
         // 10. PAGINATION
-        // Pagination applies only to available products.
-        // Out-of-stock products remain visible separately.
         // --------------------------------------------------------
 
         int totalProducts =
@@ -360,9 +357,6 @@ public class ThymeleafProductController {
             totalPages = 1;
         }
 
-
-        // Prevent invalid page numbers
-
         if (page < 0) {
             page = 0;
         }
@@ -370,7 +364,6 @@ public class ThymeleafProductController {
         if (page >= totalPages) {
             page = totalPages - 1;
         }
-
 
         int start =
                 page * size;
@@ -380,9 +373,7 @@ public class ThymeleafProductController {
                         start + size,
                         totalProducts);
 
-
         List<Product> paginatedProducts;
-
 
         if (start < totalProducts) {
 
@@ -402,98 +393,25 @@ public class ThymeleafProductController {
         // 11. SEND DATA TO THYMELEAF
         // --------------------------------------------------------
 
-        model.addAttribute(
-                "categories",
-                categories);
-
-        model.addAttribute(
-                "mainCategories",
-                mainCategories);
-
-
-        model.addAttribute(
-                "selectedCategoryId",
-                categoryId);
-
-        model.addAttribute(
-                "selectedCategory",
-                selectedCategory);
-
-        model.addAttribute(
-                "selectedMainCategory",
-                selectedMainCategory);
-
-        model.addAttribute(
-                "search",
-                search);
-
-
-        // ALL FILTERED PRODUCTS
-        model.addAttribute(
-                "allProductsList",
-                filteredProducts);
-
-
-        // AVAILABLE PRODUCTS FOR CURRENT PAGE
-        model.addAttribute(
-                "availableProducts",
-                paginatedProducts);
-
-
-        // OUT-OF-STOCK PRODUCTS
-        model.addAttribute(
-                "outOfStockProducts",
-                outOfStockProducts);
-
-
-        // Pagination
-
-        model.addAttribute(
-                "currentPage",
-                page);
-
-        model.addAttribute(
-                "totalPages",
-                totalPages);
-
-        model.addAttribute(
-                "totalItems",
-                totalProducts);
-
-
-        // Sorting
-
-        model.addAttribute(
-                "sortField",
-                sortField);
-
-        model.addAttribute(
-                "sortDir",
-                sortDir);
-
-
-        model.addAttribute(
-                "reverseSortDir",
-                sortDir.equalsIgnoreCase("asc")
-                        ? "desc"
-                        : "asc");
-
-
-        // --------------------------------------------------------
-        // 12. PRODUCT FORM
-        // --------------------------------------------------------
+        model.addAttribute("categories", categories);
+        model.addAttribute("mainCategories", mainCategories);
+        model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("selectedCategory", selectedCategory);
+        model.addAttribute("selectedMainCategory", selectedMainCategory);
+        model.addAttribute("search", search);
+        model.addAttribute("allProductsList", filteredProducts);
+        model.addAttribute("availableProducts", paginatedProducts);
+        model.addAttribute("outOfStockProducts", outOfStockProducts);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", totalProducts);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equalsIgnoreCase("asc") ? "desc" : "asc");
 
         if (!model.containsAttribute("productForm")) {
-
-            model.addAttribute(
-                    "productForm",
-                    new Product());
+            model.addAttribute("productForm", new Product());
         }
-
-
-        // --------------------------------------------------------
-        // 13. RETURN INDEX.HTML
-        // --------------------------------------------------------
 
         return "index";
     }
@@ -509,54 +427,53 @@ public class ThymeleafProductController {
             @RequestParam("imageFile") MultipartFile imageFile,
             RedirectAttributes redirectAttributes) {
 
-        boolean isUpdate = product.getId() != 0;
+        boolean isUpdate = product.getId() == null || product.getId() == 0;
 
         try {
 
             // =====================================================
             // EDITING EXISTING PRODUCT
             // =====================================================
-            if (isUpdate) {
+            if (!isUpdate) {
 
                 Product existingProduct = productRepository.findById(product.getId())
                         .orElseThrow(() ->
                                 new RuntimeException("Product not found"));
 
                 // If admin selected a NEW image
-                // If admin selected a NEW image
                 if (imageFile != null && !imageFile.isEmpty()) {
 
-                    // Find the selected category
+                    // 1. Delete old image from Cloudinary first
+                    if (existingProduct.getImage() != null) {
+                        deleteOldCloudinaryImage(existingProduct.getImage());
+                    }
+
+                    // 2. Find and sanitize category
                     Category selectedCategory = categoryRepository
                             .findById(product.getCategoryid())
                             .orElseThrow(() -> new RuntimeException("Category not found"));
 
-                    // Determine main category and subcategory
                     String mainCategory;
                     String subCategory;
 
                     if (selectedCategory.getParent() != null) {
-                        // Selected category is a subcategory
-                        mainCategory = selectedCategory.getParent().getCategoryname();
-                        subCategory = selectedCategory.getCategoryname();
+                        mainCategory = sanitizeFolderName(selectedCategory.getParent().getCategoryname());
+                        subCategory = sanitizeFolderName(selectedCategory.getCategoryname());
                     } else {
-                        // Selected category itself is a main category
-                        mainCategory = selectedCategory.getCategoryname();
-                        subCategory = "General";
+                        mainCategory = sanitizeFolderName(selectedCategory.getCategoryname());
+                        subCategory = "general";
                     }
 
-                    // Upload image to Cloudinary
+                    // 3. Upload new image to Cloudinary
                     String imageUrl = cloudinaryService.uploadImage(
                             imageFile,
                             mainCategory,
                             subCategory
                     );
 
-                    // Store Cloudinary URL in database
                     product.setImage(imageUrl);
 
                 } else {
-
                     // No new image selected → keep existing image
                     product.setImage(existingProduct.getImage());
                 }
@@ -566,37 +483,30 @@ public class ThymeleafProductController {
             // =====================================================
             // ADDING NEW PRODUCT
             // =====================================================
-            // ADDING NEW PRODUCT
             else {
                 if (imageFile != null && !imageFile.isEmpty()) {
 
-                    // Find the selected category
                     Category selectedCategory = categoryRepository
                             .findById(product.getCategoryid())
                             .orElseThrow(() -> new RuntimeException("Category not found"));
 
-                    // Determine main category and subcategory
                     String mainCategory;
                     String subCategory;
 
                     if (selectedCategory.getParent() != null) {
-                        // Selected category is a subcategory
-                        mainCategory = selectedCategory.getParent().getCategoryname();
-                        subCategory = selectedCategory.getCategoryname();
+                        mainCategory = sanitizeFolderName(selectedCategory.getParent().getCategoryname());
+                        subCategory = sanitizeFolderName(selectedCategory.getCategoryname());
                     } else {
-                        // Selected category itself is a main category
-                        mainCategory = selectedCategory.getCategoryname();
-                        subCategory = "General";
+                        mainCategory = sanitizeFolderName(selectedCategory.getCategoryname());
+                        subCategory = "general";
                     }
 
-                    // Upload image to Cloudinary
                     String imageUrl = cloudinaryService.uploadImage(
                             imageFile,
                             mainCategory,
                             subCategory
                     );
 
-                    // Store Cloudinary URL in database
                     product.setImage(imageUrl);
                 }
             }
@@ -629,6 +539,7 @@ public class ThymeleafProductController {
         return "redirect:/products";
     }
 
+
     // ============================================================
     // EDIT PRODUCT
     // ============================================================
@@ -643,7 +554,6 @@ public class ThymeleafProductController {
 
         model.addAttribute("productForm", targetProduct);
 
-        // Open products page with that product's category
         return viewDashboard(
                 0,
                 8,
@@ -664,7 +574,6 @@ public class ThymeleafProductController {
             @PathVariable Long id,
             RedirectAttributes redirectAttributes) {
 
-        // Check whether this product has any purchase history
         boolean hasPurchases = purchaseRepository.existsByProductId(id);
 
         if (hasPurchases) {
@@ -676,7 +585,6 @@ public class ThymeleafProductController {
             return "redirect:/products";
         }
 
-        // Safe to delete if there are no purchases
         productService.deleteProduct(id);
 
         redirectAttributes.addFlashAttribute(

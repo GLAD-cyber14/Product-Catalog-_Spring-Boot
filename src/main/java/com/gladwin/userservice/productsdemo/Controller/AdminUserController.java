@@ -15,8 +15,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.gladwin.userservice.productsdemo.service.CloudinaryService;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 
 @Controller
@@ -26,6 +29,7 @@ public class AdminUserController {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
+    private final Cloudinary cloudinary; // Injected for deleting old assets
 
 
     // =========================================================
@@ -34,28 +38,50 @@ public class AdminUserController {
 
     public AdminUserController(AppUserRepository appUserRepository,
                                PasswordEncoder passwordEncoder,
-                               CloudinaryService cloudinaryService) {
+                               CloudinaryService cloudinaryService,
+                               Cloudinary cloudinary) {
 
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.cloudinaryService = cloudinaryService;
+        this.cloudinary = cloudinary;
+    }
+
+
+    // =========================================================
+    // HELPER: SANITIZE FOLDER NAMES TO PREVENT DUPLICATES
+    // =========================================================
+    private String sanitizeFolderName(String name) {
+        if (name == null || name.trim().isEmpty()) return "general";
+        return name.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "_");
+    }
+
+
+    // =========================================================
+    // HELPER: DELETE OLD CLOUDINARY IMAGE
+    // =========================================================
+    private void deleteOldCloudinaryImage(String imageUrl) {
+        if (imageUrl != null && imageUrl.contains("cloudinary.com")) {
+            try {
+                String pathPart = imageUrl.substring(imageUrl.indexOf("/upload/") + 8);
+                if (pathPart.matches("^v\\d+/.*")) {
+                    pathPart = pathPart.replaceFirst("^v\\d+/", "");
+                }
+                int lastDot = pathPart.lastIndexOf('.');
+                if (lastDot != -1) {
+                    pathPart = pathPart.substring(0, lastDot);
+                }
+                cloudinary.uploader().destroy(pathPart, ObjectUtils.emptyMap());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
     // =========================================================
     // VIEW USERS
     // =========================================================
-
-//    @GetMapping
-//  public String viewUsers(Model model) {
-//
-//        List<AppUser> users =
-//                appUserRepository.findByRole("USER");
-//
-//        model.addAttribute("users", users);
-//
-//        return "admin-users";
-//    }
 
     @GetMapping
     public String viewUsersAdmins(Model model) {
@@ -105,9 +131,18 @@ public class AdminUserController {
 
             @RequestParam(value = "profileImage",
                     required = false)
-            MultipartFile profileImage
+            MultipartFile profileImage,
+            RedirectAttributes redirectAttributes
 
     ) throws IOException {
+        // Check if email already exists
+        if (appUserRepository.findByEmail(email).isPresent()) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage",
+                    "⚠️ Duplicate Email: The email '" + email + "' is already registered."
+            );
+            return "redirect:/admin/users/create";
+        }
 
 
         AppUser user = new AppUser();
@@ -130,13 +165,12 @@ public class AdminUserController {
         // PROFILE IMAGE
         // =====================================================
 
-        // PROFILE IMAGE
         if (profileImage != null && !profileImage.isEmpty()) {
 
             String imageUrl = cloudinaryService.uploadImage(
                     profileImage,
-                    "profiles",
-                    "users"
+                    sanitizeFolderName("profiles"),
+                    sanitizeFolderName("users")
             );
 
             user.setProfileImage(imageUrl);
@@ -144,6 +178,11 @@ public class AdminUserController {
 
 
         appUserRepository.save(user);
+
+        redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "User created successfully."
+        );
 
         return "redirect:/admin/users";
     }
@@ -242,7 +281,7 @@ public class AdminUserController {
         user.setUsername(username);
         user.setEmail(email);
 
-// Prevent an existing ADMIN from being changed to USER
+        // Prevent an existing ADMIN from being changed to USER
         if ("ADMIN".equalsIgnoreCase(user.getRole())
                 && "USER".equalsIgnoreCase(role)) {
 
@@ -278,10 +317,15 @@ public class AdminUserController {
 
         if (profileImage != null && !profileImage.isEmpty()) {
 
+            // Delete old profile image from Cloudinary first
+            if (user.getProfileImage() != null) {
+                deleteOldCloudinaryImage(user.getProfileImage());
+            }
+
             String imageUrl = cloudinaryService.uploadImage(
                     profileImage,
-                    "profiles",
-                    "users"
+                    sanitizeFolderName("profiles"),
+                    sanitizeFolderName("users")
             );
 
             user.setProfileImage(imageUrl);

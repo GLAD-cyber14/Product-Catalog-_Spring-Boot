@@ -36,6 +36,16 @@
                         Create a new user account
                     </p>
 
+                    <!-- =========================================================
+                         DUPLICATE EMAIL ERROR ALERT BANNER
+                    ========================================================= -->
+                    <div th:if="${errorMessage}"
+                         class="alert alert-danger alert-dismissible fade show"
+                         role="alert">
+                        <span th:text="${errorMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
 
                     <form method="post"
                           action="/admin/users/create"
