@@ -688,6 +688,44 @@
         }
     }
 
+    /* ================= RESPONSIVE MEDIA BREAKPOINTS ================= */
+    @media (max-width: 1050px) {
+        .home-hero {
+            grid-template-columns: 1fr 1fr;
+        }
+        .hero-visual {
+            display: none;
+        }
+    }
+
+    @media (max-width: 1000px) {
+        .category-grid,
+        .featured-products {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .home-hero {
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .home-hero {
+            width: calc(100% - 24px);
+            min-height: auto;
+            padding: 25px;
+            grid-template-columns: 1fr;
+        }
+        .hero-left h1 {
+            font-size: 32px;
+        }
+        .hero-middle {
+            margin-top: 5px;
+        }
+    }
+
+    /* ==================================================== */
+    /* REPLACE FROM HERE DOWNWARDS                          */
+    /* ==================================================== */
     @media (max-width: 650px) {
         .home-section,
         .home-cta,
@@ -714,12 +752,48 @@
             font-size: 14px;
         }
 
+        /* --- FIXED SEARCH BAR FOR MOBILE --- */
         .home-search {
-            flex-direction: row;
+            flex-direction: row !important;
+            align-items: center;
+            padding: 4px;
+        }
+
+        .home-search input {
+            font-size: 13px;
+            padding: 10px 8px;
+            min-width: 0;
         }
 
         .home-search button {
-            padding: 12px 15px;
+            padding: 10px 14px;
+            font-size: 13px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* --- CLEANER MOBILE CATEGORY PILLS --- */
+        .hero-middle .quick-categories {
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .hero-middle .quick-categories a {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        .home-hero {
+            width: calc(100% - 24px);
+            min-height: auto;
+            padding: 20px 16px;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .hero-left h1 {
+            font-size: 28px;
+            letter-spacing: -0.5px;
         }
 
         .home-cta {
@@ -732,6 +806,8 @@
 
         .home-footer > div {
             flex-direction: column;
+            gap: 8px;
+            text-align: center;
         }
 
         .featured-bottom {
@@ -750,6 +826,7 @@
         }
     }
 </style>
+
 
 
 <!-- ================= SCRIPTS ================= -->
