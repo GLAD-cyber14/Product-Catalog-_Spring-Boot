@@ -752,24 +752,33 @@
             font-size: 14px;
         }
 
-        /* --- FIXED SEARCH BAR FOR MOBILE --- */
+        /* --- REFINED SEARCH BAR FOR MOBILE --- */
         .home-search {
+            display: flex !important;
             flex-direction: row !important;
             align-items: center;
-            padding: 4px;
+            padding: 6px 10px !important;
+            gap: 8px !important;
+        }
+
+        .home-search .search-icon {
+            margin-left: 4px !important;
+            font-size: 16px !important;
         }
 
         .home-search input {
-            font-size: 13px;
-            padding: 10px 8px;
-            min-width: 0;
+            font-size: 13px !important;
+            padding: 8px 4px !important;
+            min-width: 0 !important;
+            width: auto !important;
         }
 
         .home-search button {
-            padding: 10px 14px;
-            font-size: 13px;
-            white-space: nowrap;
-            flex-shrink: 0;
+            padding: 10px 14px !important;
+            font-size: 13px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            border-radius: 10px !important;
         }
 
         /* --- CLEANER MOBILE CATEGORY PILLS --- */
