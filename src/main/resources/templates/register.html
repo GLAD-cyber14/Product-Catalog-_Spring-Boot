@@ -8,6 +8,54 @@
     <link rel="stylesheet"
           th:href="@{/css/auth.css}">
 
+    <style>
+        /* Green Success Alert Style */
+        .alert-success {
+            color: #0f5132;
+            background-color: #d1e7dd;
+            border: 1px solid #badbcc;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Error Alert Style */
+        .alert-danger {
+            color: #842029;
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Inline Spinner Animation */
+        .btn-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: -1px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .auth-button.btn-loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+    </style>
+
 </head>
 
 <body>
@@ -29,10 +77,20 @@
 
     <!-- Registration Form -->
     <form th:action="@{/register}"
-          method="post">
-        <div th:if="${error}" style="color: red; margin-bottom: 15px;">
-            <span th:text="${error}"></span>
+          method="post"
+          id="registerForm"
+          onsubmit="handleRegisterSubmit(this)">
+
+        <!-- Green Success Alert -->
+        <div th:if="${successMessage}" class="alert-success">
+            ✅ <span th:text="${successMessage}">Registered successfully!</span>
         </div>
+
+        <!-- Red Error Alert -->
+        <div th:if="${error}" class="alert-danger">
+            ⚠️ <span th:text="${error}"></span>
+        </div>
+
         <!-- Username -->
         <div class="form-group">
 
@@ -66,8 +124,6 @@
         </div>
 
 
-
-
         <!-- Password -->
         <div class="form-group">
 
@@ -84,8 +140,9 @@
         </div>
 
 
-        <!-- Register Button -->
+        <!-- Register Button with Loader -->
         <button type="submit"
+                id="registerBtn"
                 class="auth-button">
 
             CREATE ACCOUNT
@@ -107,6 +164,17 @@
     </div>
 
 </div>
+
+<!-- Inline Loader Script -->
+<script>
+    function handleRegisterSubmit(form) {
+        const btn = document.getElementById("registerBtn");
+        if (!btn || btn.classList.contains("btn-loading")) return;
+
+        btn.classList.add("btn-loading");
+        btn.innerHTML = '<span class="btn-spinner"></span> CREATING ACCOUNT...';
+    }
+</script>
 
 </body>
 
